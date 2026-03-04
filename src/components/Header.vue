@@ -22,7 +22,7 @@ const emit = defineEmits<{
         <div class="text-2xl">🏠</div>
         <div>
           <h1 class="text-xl font-bold">FamilyWall</h1>
-          <p class="text-xs text-white/40">家族照片墙</p>
+          <p class="text-xs text-white/40">照片墙</p>
         </div>
       </div>
       <div class="flex items-center gap-3">
