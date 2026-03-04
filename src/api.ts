@@ -193,4 +193,88 @@ export const photos = {
     )
     return { success: !results.some(r => r.error), deleted: results.length }
   },
+
+  // 点赞/取消点赞
+  async toggleLike(photoId: string) {
+    const res = await fetch(`${API_BASE}/photos/${photoId}/like`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+
+  // 获取点赞列表
+  async getLikes(photoId: string) {
+    const res = await fetch(`${API_BASE}/photos/${photoId}/likes`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+}
+
+// 好友 API
+export const friends = {
+  // 搜索用户
+  async search(query: string) {
+    const res = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+
+  // 添加好友
+  async add(friendId: string) {
+    const res = await fetch(`${API_BASE}/friends/${friendId}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+
+  // 获取好友列表
+  async getAll() {
+    const res = await fetch(`${API_BASE}/friends`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+
+  // 响应好友请求
+  async respond(friendId: string, accept: boolean) {
+    const res = await fetch(`${API_BASE}/friends/${friendId}/respond`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({ accept }),
+    })
+    return handleResponse(res)
+  },
+
+  // 删除好友
+  async remove(friendId: string) {
+    const res = await fetch(`${API_BASE}/friends/${friendId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+}
+
+// 通知 API
+export const notifications = {
+  // 获取通知列表
+  async getAll() {
+    const res = await fetch(`${API_BASE}/notifications`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
+
+  // 标记为已读
+  async markRead(notifId: string) {
+    const res = await fetch(`${API_BASE}/notifications/${notifId}/read`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    return handleResponse(res)
+  },
 }

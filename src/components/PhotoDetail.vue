@@ -1,17 +1,32 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
+import { photos } from '../api'
 
 const props = defineProps<{
   photo: any
+  liked?: boolean
+  likeCount?: number
 }>()
 
 const emit = defineEmits<{
   close: []
   addComment: [photoId: string, content: string]
   deleteComment: [photoId: string, commentId: string]
+  likeChange: [photoId: string, liked: boolean, count: number]
 }>()
 
 const comment = ref('')
+const loadingLike = ref(false)
+
+async function toggleLike() {
+  loadingLike.value = true
+  const result = await photos.toggleLike(props.photo.id)
+  loadingLike.value = false
+  
+  if (result && !result.error) {
+    emit('likeChange', props.photo.id, result.liked, result.likeCount)
+  }
+}
 
 function submitComment() {
   if (!comment.value.trim()) return
@@ -100,6 +115,27 @@ function formatDate(dateStr: string) {
         <div class="p-6 border-b border-gray-100">
           <h3 class="text-lg font-semibold text-gray-800">{{ photo.title || '无标题' }}</h3>
           <p class="text-sm text-gray-400 mt-1">{{ formatDate(photo.createdAt) }}</p>
+          
+          <!-- Like Button -->
+          <button 
+            @click="toggleLike"
+            :disabled="loadingLike"
+            :class="[
+              'mt-3 flex items-center gap-2 text-sm font-medium transition-all',
+              liked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+            ]"
+          >
+            <svg 
+              class="w-6 h-6 transition-transform" 
+              :class="loadingLike ? 'animate-spin' : liked ? 'fill-current scale-110' : 'fill-none'"
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            <span v-if="likeCount !== undefined">{{ likeCount }} 赞</span>
+            <span v-else>{{ photo.likeCount || 0 }} 赞</span>
+          </button>
         </div>
         
         <!-- Description -->

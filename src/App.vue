@@ -81,6 +81,7 @@ async function loadAlbums() {
 async function loadPhotos() {
   if (!currentFamilyId.value) return
   photosList.value = await photos.getByFamily(currentFamilyId.value)
+  await loadPhotoLikes()
 }
 
 // Actions
@@ -146,6 +147,38 @@ async function deletePhotos(photoIds: string[]) {
     await loadPhotos()
   } else {
     alert('删除失败，请重试')
+  }
+}
+
+// 点赞状态管理
+const photoLikes = ref<Record<string, { liked: boolean; count: number }>>({})
+
+// 加载照片点赞状态
+async function loadPhotoLikes() {
+  const likes: Record<string, { liked: boolean; count: number }> = {}
+  for (const photo of photosList.value) {
+    const result = await photos.getLikes(photo.id)
+    if (result && !result.error) {
+      likes[photo.id] = {
+        liked: result.some((l: any) => l.userId === user.value?.id),
+        count: result.length
+      }
+    }
+  }
+  photoLikes.value = likes
+}
+
+// 点赞变化处理
+function handleLikeChange(photoId: string, liked: boolean, count: number) {
+  photoLikes.value[photoId] = { liked, count }
+  // 更新列表中的点赞数
+  const idx = photosList.value.findIndex(p => p.id === photoId)
+  if (idx >= 0) {
+    photosList.value[idx].likeCount = count
+  }
+  // 更新当前选中的照片
+  if (selectedPhoto.value?.id === photoId) {
+    selectedPhoto.value.likeCount = count
   }
 }
 
@@ -238,8 +271,11 @@ onMounted(async () => {
       <PhotoDetail 
         v-if="selectedPhoto" 
         :photo="selectedPhoto" 
+        :liked="photoLikes[selectedPhoto.id]?.liked"
+        :like-count="photoLikes[selectedPhoto.id]?.count"
         @close="selectedPhoto = null" 
         @add-comment="addComment"
+        @like-change="handleLikeChange"
       />
     </div>
   </div>
