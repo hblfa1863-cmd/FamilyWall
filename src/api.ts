@@ -185,4 +185,12 @@ export const photos = {
     })
     return handleResponse(res)
   },
+
+  // 批量删除照片
+  async deleteMany(photoIds: string[]) {
+    const results = await Promise.all(
+      photoIds.map(id => this.delete(id))
+    )
+    return { success: !results.some(r => r.error), deleted: results.length }
+  },
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps<{
   photo: any
@@ -8,6 +8,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
   addComment: [photoId: string, content: string]
+  deleteComment: [photoId: string, commentId: string]
 }>()
 
 const comment = ref('')
@@ -16,6 +17,38 @@ function submitComment() {
   if (!comment.value.trim()) return
   emit('addComment', props.photo.id, comment.value.trim())
   comment.value = ''
+}
+
+// 生成头像颜色
+function getAvatarColor(name: string) {
+  const colors = [
+    'from-amber-400 to-orange-500',
+    'from-green-400 to-emerald-500',
+    'from-blue-400 to-cyan-500',
+    'from-purple-400 to-pink-500',
+    'from-rose-400 to-red-500',
+    'from-teal-400 to-cyan-500',
+  ]
+  const index = name ? name.charCodeAt(0) % colors.length : 0
+  return colors[index]
+}
+
+// 格式化相对时间
+function formatRelativeTime(dateStr: string) {
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+  
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  if (days < 7) return `${days}天前`
+  
+  return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
 }
 
 function formatDate(dateStr: string) {
@@ -36,6 +69,7 @@ function formatDate(dateStr: string) {
     <button 
       @click="emit('close')"
       class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors"
+      aria-label="关闭"
     >
       <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -79,17 +113,21 @@ function formatDate(dateStr: string) {
           
           <div v-if="photo.comments?.length > 0" class="space-y-4 mb-6">
             <div v-for="comment in photo.comments" :key="comment.id" class="flex gap-3">
-              <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+              <!-- Avatar -->
+              <div :class="['w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0 bg-gradient-to-br', getAvatarColor(comment.author)]">
                 {{ comment.author?.[0] || '?' }}
               </div>
-              <div>
-                <p class="text-sm font-medium text-gray-800">{{ comment.author }}</p>
-                <p class="text-sm text-gray-600">{{ comment.text }}</p>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-medium text-gray-800">{{ comment.author }}</p>
+                  <span class="text-xs text-gray-400">{{ formatRelativeTime(comment.createdAt) }}</span>
+                </div>
+                <p class="text-sm text-gray-600 break-words">{{ comment.text }}</p>
               </div>
             </div>
           </div>
           
-          <p v-else class="text-gray-400 text-sm mb-6">暂无评论</p>
+          <p v-else class="text-gray-400 text-sm mb-6">暂无评论，快来抢沙发吧~</p>
         </div>
         
         <!-- Comment Form -->
@@ -103,7 +141,8 @@ function formatDate(dateStr: string) {
             />
             <button 
               type="submit"
-              class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all"
+              :disabled="!comment.trim()"
+              class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full text-sm font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               发送
             </button>
@@ -116,14 +155,8 @@ function formatDate(dateStr: string) {
 
 <style scoped>
 @keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .animate-scale-in {

@@ -139,6 +139,16 @@ async function addComment(photoId: string, content: string) {
   }
 }
 
+// 批量删除照片
+async function deletePhotos(photoIds: string[]) {
+  const result = await photos.deleteMany(photoIds)
+  if (result.success) {
+    await loadPhotos()
+  } else {
+    alert('删除失败，请重试')
+  }
+}
+
 // Initialize
 onMounted(async () => {
   if (auth.isLoggedIn()) {
@@ -200,7 +210,8 @@ onMounted(async () => {
           :family-name="currentFamily?.name" 
           :can-upload="canUpload" 
           @select-photo="selectedPhoto = $event" 
-          @open-upload="showUploadModal = true" 
+          @open-upload="showUploadModal = true"
+          @delete-photos="deletePhotos"
         />
       </main>
       
