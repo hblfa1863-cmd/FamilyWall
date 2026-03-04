@@ -12,6 +12,9 @@ import UploadModal from './components/UploadModal.vue'
 import AlbumModal from './components/AlbumModal.vue'
 import InviteModal from './components/InviteModal.vue'
 import PhotoDetail from './components/PhotoDetail.vue'
+import FriendsList from './components/FriendsList.vue'
+import Notifications from './components/Notifications.vue'
+import ShareModal from './components/ShareModal.vue'
 
 // State
 const user = ref<{ id: string; username: string; email: string } | null>(null)
@@ -25,6 +28,12 @@ const showUploadModal = ref(false)
 const showAlbumModal = ref(false)
 const showInviteModal = ref(false)
 const newInviteCode = ref('')
+const showFriendsList = ref(false)
+const showNotifications = ref(false)
+const showShareModal = ref(false)
+
+// 通知未读数
+const unreadCount = ref(0)
 
 // Computed
 const currentFamily = computed(() => familiesList.value.find(f => f.id === currentFamilyId.value))
@@ -171,15 +180,20 @@ async function loadPhotoLikes() {
 // 点赞变化处理
 function handleLikeChange(photoId: string, liked: boolean, count: number) {
   photoLikes.value[photoId] = { liked, count }
-  // 更新列表中的点赞数
   const idx = photosList.value.findIndex(p => p.id === photoId)
   if (idx >= 0) {
     photosList.value[idx].likeCount = count
   }
-  // 更新当前选中的照片
   if (selectedPhoto.value?.id === photoId) {
     selectedPhoto.value.likeCount = count
   }
+}
+
+// 加载通知未读数
+async function loadUnreadCount() {
+  const { notifications } = await import('./api')
+  const list = await notifications.getAll()
+  unreadCount.value = list?.filter((n: any) => !n.read).length || 0
 }
 
 // Initialize
@@ -189,6 +203,7 @@ onMounted(async () => {
     if (me.id) {
       user.value = me
       await loadFamilies()
+      await loadUnreadCount()
       view.value = 'wall'
     }
   }
@@ -207,9 +222,13 @@ onMounted(async () => {
         :user="user" 
         :families="familiesList" 
         :current-family-id="currentFamilyId" 
+        :unread-count="unreadCount"
         @switch-family="switchFamily" 
         @create-family="createFamily" 
         @show-invite-code="showInviteCode" 
+        @show-notifications="showNotifications = true"
+        @show-friends="showFriendsList = true"
+        @show-share="showShareModal = true"
         @logout="logout" 
       />
       
@@ -276,6 +295,23 @@ onMounted(async () => {
         @close="selectedPhoto = null" 
         @add-comment="addComment"
         @like-change="handleLikeChange"
+      />
+      
+      <FriendsList 
+        v-if="showFriendsList" 
+        @close="showFriendsList = false"
+        @add-friend="showFriendsList = false"
+      />
+      
+      <Notifications 
+        v-if="showNotifications" 
+        @close="showNotifications = false"
+      />
+      
+      <ShareModal 
+        v-if="showShareModal" 
+        :family-name="currentFamily?.name"
+        @close="showShareModal = false"
       />
     </div>
   </div>

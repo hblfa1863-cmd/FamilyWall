@@ -5,12 +5,16 @@ defineProps<{
   user: User | null
   families: Family[]
   currentFamilyId: string
+  unreadCount?: number
 }>()
 
 const emit = defineEmits<{
   switchFamily: [familyId: string]
   createFamily: []
   showInviteCode: []
+  showNotifications: []
+  showFriends: []
+  showShare: []
   logout: []
 }>()
 </script>
@@ -32,6 +36,45 @@ const emit = defineEmits<{
         
         <!-- Right Side -->
         <div class="flex items-center gap-2 sm:gap-3">
+          <!-- Share Button -->
+          <button 
+            @click="emit('showShare')"
+            class="p-2 text-gray-500 hover:text-amber-600 transition-colors"
+            title="分享"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+          </button>
+          
+          <!-- Friends Button -->
+          <button 
+            @click="emit('showFriends')"
+            class="p-2 text-gray-500 hover:text-amber-600 transition-colors"
+            title="好友"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+          </button>
+          
+          <!-- Notifications Button -->
+          <button 
+            @click="emit('showNotifications')"
+            class="relative p-2 text-gray-500 hover:text-amber-600 transition-colors"
+            title="通知"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span 
+              v-if="unreadCount && unreadCount > 0"
+              class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center"
+            >
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
+          </button>
+          
           <!-- Family Selector -->
           <select 
             v-if="families.length > 0" 
