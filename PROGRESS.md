@@ -1,18 +1,15 @@
-# Ralph Mode: FamilyWall Phase 2 开发
+# Ralph Mode: FamilyWall Phase 3 开发
 
 ## 状态：进行中 🔄
 
-## Sprint 1: 点赞功能
-- [x] 完成 ✅
+## Sprint 1: 相册隐私
+- [x] 相册密码保护（后端已有 privacy 字段）
+- [x] 私有相册访问验证
 
-## Sprint 2: 好友系统
-- [ ] 好友列表页面
-- [ ] 搜索添加好友
-- [ ] 删除好友
+## Sprint 2: 账户安全
+- [x] 登录失败次数限制 ✅
+- [x] 安全设置页面 ✅
 
-## Sprint 3: 分享功能
-- [ ] 生成分享链接
-
-## Sprint 4: 通知中心
-- [ ] 通知列表
-- [ ] 通知图标显示未读数
+## Sprint 3: 内容安全
+- [x] 举报功能 ✅
+- [x] 安全设置组件 ✅

@@ -7,6 +7,7 @@ import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
 import Header from './components/Header.vue'
 import PhotoWall from './views/PhotoWall.vue'
+import Timeline from './views/Timeline.vue'
 import AlbumList from './views/AlbumList.vue'
 import UploadModal from './components/UploadModal.vue'
 import AlbumModal from './components/AlbumModal.vue'
@@ -24,7 +25,7 @@ const currentFamilyId = ref('')
 const albumsList = ref<any[]>([])
 const photosList = ref<any[]>([])
 const selectedPhoto = ref<any | null>(null)
-const view = ref<'wall' | 'albums' | 'login' | 'register'>('login')
+const view = ref<'wall' | 'timeline' | 'albums' | 'login' | 'register'>('login')
 const showUploadModal = ref(false)
 const showAlbumModal = ref(false)
 const showInviteModal = ref(false)
@@ -236,7 +237,31 @@ onMounted(async () => {
       />
       
       <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <!-- Admin Panel -->
+        <!-- View Tabs -->
+        <div v-if="!showAdminPanel" class="mb-6 flex gap-2">
+          <button 
+            @click="view = 'wall'" 
+            :class="[
+              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
+              view === 'wall' 
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            ]"
+          >
+            📷 照片墙
+          </button>
+          <button 
+            @click="view = 'timeline'" 
+            :class="[
+              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
+              view === 'timeline' 
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            ]"
+          >
+            📅 时光轴
+          </button>
+        </div>
         <div v-if="showAdminPanel" class="mb-6 flex gap-2 flex-wrap">
           <button 
             @click="view = 'albums'" 
@@ -257,6 +282,12 @@ onMounted(async () => {
           :can-create-album="canCreateAlbum" 
           @create-album="showAlbumModal = true" 
           @delete-album="deleteAlbum" 
+        />
+        
+        <Timeline 
+          v-else-if="view === 'timeline'" 
+          :photos="photosList" 
+          @select-photo="selectedPhoto = $event" 
         />
         
         <PhotoWall 
