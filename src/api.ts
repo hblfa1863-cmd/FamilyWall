@@ -1,6 +1,9 @@
 // API 配置
 const API_BASE = 'https://family-wall-backend.vercel.app/api'
 
+// 辅助函数：提取 data 部分
+const extractData = (res: Response) => res.json().then(data => data.data)
+
 export const auth = {
   async login(email: string, password: string) {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -9,11 +12,11 @@ export const auth = {
       body: JSON.stringify({ email, password }),
     })
     const data = await res.json()
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+    if (data.data?.token) {
+      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
     }
-    return data
+    return data.data
   },
 
   async register(username: string, email: string, password: string, inviteCode?: string) {
@@ -23,18 +26,18 @@ export const auth = {
       body: JSON.stringify({ username, email, password, inviteCode }),
     })
     const data = await res.json()
-    if (data.token) {
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+    if (data.data?.token) {
+      localStorage.setItem('token', data.data.token)
+      localStorage.setItem('user', JSON.stringify(data.data.user))
     }
-    return data
+    return data.data
   },
 
   async getMe() {
     const res = await fetch(`${API_BASE}/auth/me`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   logout() {
@@ -57,7 +60,7 @@ export const families = {
     const res = await fetch(`${API_BASE}/families`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async create(name: string, description: string) {
@@ -66,21 +69,21 @@ export const families = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({ name, description }),
     })
-    return res.json()
+    return extractData(res)
   },
 
   async getMembers(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}/members`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async getInviteCode(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}/invite-code`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async regenerateInviteCode(familyId: string) {
@@ -88,7 +91,7 @@ export const families = {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async leave(familyId: string) {
@@ -96,7 +99,7 @@ export const families = {
       method: 'POST',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async delete(familyId: string) {
@@ -104,7 +107,7 @@ export const families = {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 }
 
@@ -113,7 +116,7 @@ export const albums = {
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async create(familyId: string, data: { name: string; description?: string; cover?: string; privacy?: string; allowedMembers?: string[] }) {
@@ -122,7 +125,7 @@ export const albums = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(data),
     })
-    return res.json()
+    return extractData(res)
   },
 
   async delete(albumId: string) {
@@ -130,7 +133,7 @@ export const albums = {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 }
 
@@ -139,7 +142,7 @@ export const photos = {
     const res = await fetch(`${API_BASE}/families/${familyId}/photos`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async upload(familyId: string, data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }) {
@@ -148,14 +151,14 @@ export const photos = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify(data),
     })
-    return res.json()
+    return extractData(res)
   },
 
   async getById(photoId: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async delete(photoId: string) {
@@ -163,7 +166,7 @@ export const photos = {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
-    return res.json()
+    return extractData(res)
   },
 
   async addComment(photoId: string, content: string) {
@@ -172,6 +175,6 @@ export const photos = {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({ content }),
     })
-    return res.json()
+    return extractData(res)
   },
 }

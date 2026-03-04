@@ -36,19 +36,25 @@ const showAdminPanel = computed(() => canManageMembers.value || canCreateAlbum.v
 // Auth
 async function handleLogin(email: string, password: string) {
   const result = await auth.login(email, password)
-  if (result.user) {
+  if (result?.user) {
     user.value = result.user
     await loadFamilies()
     view.value = 'wall'
   } else {
-    alert(result.error || '登录失败')
+    alert(result?.error || '登录失败')
   }
 }
 
 async function handleRegister(username: string, email: string, password: string, inviteCode?: string) {
   const result = await auth.register(username, email, password, inviteCode)
-  if (result.user) {
+  if (result?.user) {
     user.value = result.user
+    await loadFamilies()
+    view.value = 'wall'
+  } else {
+    alert(result?.error || '注册失败')
+  }
+}
     await loadFamilies()
     view.value = 'wall'
   } else {
