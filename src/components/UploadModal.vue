@@ -1,27 +1,35 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { Album } from '../api'
 
-defineProps<{
-  albums: Album[]
+const props = defineProps<{
+  albums: any[]
 }>()
 
 const emit = defineEmits<{
-  upload: [data: { urls: string[]; type: string; title: string; description: string; albumId?: string }]
+  upload: [data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }]
   close: []
 }>()
 
-const form = ref({ urls: '', title: '', description: '', albumId: '', type: 'image' })
+const form = ref({
+  url: '',
+  title: '',
+  description: '',
+  albumId: '',
+  privacy: 'public'
+})
 
 function submit() {
-  const urls = form.value.urls.split('\n').map(s => s.trim()).filter(s => s)
-  if (urls.length === 0) {
-    alert('请输入URL')
+  if (!form.value.url.trim()) {
+    alert('请输入图片链接')
     return
   }
+  
+  // 判断是图片还是视频
+  const isVideo = form.value.url.match(/\.(mp4|webm|mov|avi)$/i)
+  
   emit('upload', {
-    urls,
-    type: form.value.type,
+    urls: [form.value.url.trim()],
+    type: isVideo ? 'video' : 'image',
     title: form.value.title,
     description: form.value.description,
     albumId: form.value.albumId || undefined
@@ -30,30 +38,92 @@ function submit() {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" @click.self="emit('close')">
-    <div class="bg-[#141416] border border-white/10 rounded-2xl w-full max-w-lg p-6">
-      <h3 class="text-xl font-bold mb-4">上传照片</h3>
-      <div class="space-y-4">
-        <textarea v-model="form.urls" placeholder="照片URL(每行一个)" rows="3" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30"></textarea>
-        <input v-model="form.title" type="text" placeholder="标题(选填)" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30" />
-        <textarea v-model="form.description" placeholder="描述(选填)" rows="2" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30"></textarea>
-        <select v-model="form.albumId" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white">
-          <option value="">不放入相册</option>
-          <option v-for="a in albums" :key="a.id" :value="a.id">{{ a.name }}</option>
-        </select>
-        <div class="flex gap-4">
-          <label class="flex items-center gap-2">
-            <input type="radio" v-model="form.type" value="image" /> 图片
-          </label>
-          <label class="flex items-center gap-2">
-            <input type="radio" v-model="form.type" value="video" /> 视频
-          </label>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="emit('close')"></div>
+    
+    <!-- Modal -->
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
+      <!-- Header -->
+      <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-800">上传照片</h3>
+        <button @click="emit('close')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Form -->
+      <form @submit.prevent="submit" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">图片/视频链接</label>
+          <input 
+            v-model="form.url" 
+            type="url" 
+            placeholder="https://example.com/photo.jpg"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+            required
+          />
         </div>
-      </div>
-      <div class="flex gap-3 mt-6">
-        <button @click="emit('close')" class="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl">取消</button>
-        <button @click="submit" class="flex-1 py-3 bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold rounded-xl">上传</button>
-      </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">标题（可选）</label>
+          <input 
+            v-model="form.title" 
+            type="text" 
+            placeholder="照片标题"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+          />
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">描述（可选）</label>
+          <textarea 
+            v-model="form.description" 
+            placeholder="照片描述"
+            rows="2"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none"
+          ></textarea>
+        </div>
+        
+        <div v-if="albums.length > 0">
+          <label class="block text-sm font-medium text-gray-700 mb-2">相册（可选）</label>
+          <select 
+            v-model="form.albumId"
+            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+          >
+            <option value="">不加入相册</option>
+            <option v-for="album in albums" :key="album.id" :value="album.id">
+              {{ album.name }}
+            </option>
+          </select>
+        </div>
+        
+        <button 
+          type="submit" 
+          class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+        >
+          上 传
+        </button>
+      </form>
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+</style>

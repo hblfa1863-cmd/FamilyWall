@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { auth, families, albums, photos } from './api'
 
 // Components
@@ -94,15 +94,18 @@ async function createFamily() {
   }
 }
 
+async function switchFamily(familyId: string) {
+  currentFamilyId.value = familyId
+  await Promise.all([loadAlbums(), loadPhotos()])
+}
+
 async function showInviteCode() {
-  if (!currentFamilyId.value) return
   const result = await families.getInviteCode(currentFamilyId.value)
   newInviteCode.value = result.inviteCode || ''
   showInviteModal.value = true
 }
 
 async function createAlbum(data: { name: string; description: string; privacy: string; cover: string }) {
-  if (!currentFamilyId.value) return
   const result = await albums.create(currentFamilyId.value, data)
   if (result.id) {
     await loadAlbums()
@@ -111,13 +114,14 @@ async function createAlbum(data: { name: string; description: string; privacy: s
 }
 
 async function deleteAlbum(albumId: string) {
-  if (!confirm('确定删除?')) return
-  await albums.delete(albumId)
-  await loadAlbums()
+  if (!confirm('确定要删除这个相册吗？')) return
+  const result = await albums.delete(albumId)
+  if (!result.error) {
+    await loadAlbums()
+  }
 }
 
-async function uploadPhoto(data: { urls: string[]; type: string; title: string; description: string; albumId?: string }) {
-  if (!currentFamilyId.value) return
+async function uploadPhoto(data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }) {
   const result = await photos.upload(currentFamilyId.value, data)
   if (!result.error) {
     await loadPhotos()
@@ -126,7 +130,6 @@ async function uploadPhoto(data: { urls: string[]; type: string; title: string; 
 }
 
 async function addComment(photoId: string, content: string) {
-  if (!content.trim()) return
   await photos.addComment(photoId, content)
   const updated = await photos.getById(photoId)
   if (updated.id) {
@@ -136,37 +139,135 @@ async function addComment(photoId: string, content: string) {
   }
 }
 
-async function switchFamily(familyId: string) {
-  currentFamilyId.value = familyId
-  await Promise.all([loadAlbums(), loadPhotos()])
-}
-
-// Init
-auth.isLoggedIn() && auth.getMe().then(u => {
-  if (u.id) {
-    user.value = u
-    loadFamilies().then(() => view.value = 'wall')
+// Initialize
+onMounted(async () => {
+  if (auth.isLoggedIn()) {
+    const me = await auth.getMe()
+    if (me.id) {
+      user.value = me
+      await loadFamilies()
+      view.value = 'wall'
+    }
   }
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0D0D0F] text-white">
+  <div class="min-h-screen bg-[#FFFEF8] text-gray-800 font-sans">
+    <!-- Login/Register Views -->
     <LoginView v-if="view === 'login'" @login="handleLogin" @switch-to-register="view = 'register'" />
     <RegisterView v-else-if="view === 'register'" @register="handleRegister" @switch-to-login="view = 'login'" />
-    <div v-else>
-      <Header :user="user" :families="familiesList" :current-family-id="currentFamilyId" @switch-family="switchFamily" @create-family="createFamily" @show-invite-code="showInviteCode" @logout="logout" />
-      <main class="pt-24 pb-12 px-6">
-        <div v-if="showAdminPanel" class="mb-8 flex gap-3">
-          <button @click="view = 'albums'" :class="['px-4 py-2 rounded-xl text-sm font-medium', view === 'albums' ? 'bg-amber-400 text-black' : 'bg-white/5 border border-white/10']">📁 相册管理</button>
+    
+    <!-- Main App -->
+    <div v-else class="min-h-screen bg-gradient-to-br from-[#FFFEF8] via-[#FFF8F0] to-[#FFF5E6]">
+      <Header 
+        :user="user" 
+        :families="familiesList" 
+        :current-family-id="currentFamilyId" 
+        @switch-family="switchFamily" 
+        @create-family="createFamily" 
+        @show-invite-code="showInviteCode" 
+        @logout="logout" 
+      />
+      
+      <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <!-- Admin Panel -->
+        <div v-if="showAdminPanel" class="mb-6 flex gap-2 flex-wrap">
+          <button 
+            @click="view = 'albums'" 
+            :class="[
+              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
+              view === 'albums' 
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
+                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
+            ]"
+          >
+            📁 相册管理
+          </button>
         </div>
-        <AlbumList v-if="view === 'albums'" :albums="albumsList" :can-create-album="canCreateAlbum" @create-album="showAlbumModal = true" @delete-album="deleteAlbum" />
-        <PhotoWall v-else :photos="photosList" :family-name="currentFamily?.name" :can-upload="canUpload" @select-photo="selectedPhoto = $event" @open-upload="showUploadModal = true" />
+        
+        <AlbumList 
+          v-if="view === 'albums'" 
+          :albums="albumsList" 
+          :can-create-album="canCreateAlbum" 
+          @create-album="showAlbumModal = true" 
+          @delete-album="deleteAlbum" 
+        />
+        
+        <PhotoWall 
+          v-else 
+          :photos="photosList" 
+          :family-name="currentFamily?.name" 
+          :can-upload="canUpload" 
+          @select-photo="selectedPhoto = $event" 
+          @open-upload="showUploadModal = true" 
+        />
       </main>
-      <UploadModal v-if="showUploadModal" :albums="albumsList" @upload="uploadPhoto" @close="showUploadModal = false" />
-      <AlbumModal v-if="showAlbumModal" @create="createAlbum" @close="showAlbumModal = false" />
-      <InviteModal v-if="showInviteModal" :code="newInviteCode" @close="showInviteModal = false" />
-      <PhotoDetail v-if="selectedPhoto" :photo="selectedPhoto" @close="selectedPhoto = null" @add-comment="addComment" />
+      
+      <!-- Modals -->
+      <UploadModal 
+        v-if="showUploadModal" 
+        :albums="albumsList" 
+        @upload="uploadPhoto" 
+        @close="showUploadModal = false" 
+      />
+      
+      <AlbumModal 
+        v-if="showAlbumModal" 
+        @create="createAlbum" 
+        @close="showAlbumModal = false" 
+      />
+      
+      <InviteModal 
+        v-if="showInviteModal" 
+        :code="newInviteCode" 
+        @close="showInviteModal = false" 
+      />
+      
+      <PhotoDetail 
+        v-if="selectedPhoto" 
+        :photo="selectedPhoto" 
+        @close="selectedPhoto = null" 
+        @add-comment="addComment"
+      />
     </div>
   </div>
 </template>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+:root {
+  font-family: 'Noto Sans SC', sans-serif;
+}
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d4;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a3a3a3;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+</style>
