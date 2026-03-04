@@ -278,3 +278,26 @@ export const notifications = {
     return handleResponse(res)
   },
 }
+
+// 举报 API
+export const reports = {
+  // 举报照片
+  async reportPhoto(photoId: string, reason: string) {
+    const res = await fetch(`${API_BASE}/photos/${photoId}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({ reason }),
+    })
+    return handleResponse(res)
+  },
+
+  // 举报用户
+  async reportUser(userId: string, reason: string) {
+    const res = await fetch(`${API_BASE}/users/${userId}/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({ reason }),
+    })
+    return handleResponse(res)
+  },
+}

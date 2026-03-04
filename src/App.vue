@@ -15,6 +15,7 @@ import PhotoDetail from './components/PhotoDetail.vue'
 import FriendsList from './components/FriendsList.vue'
 import Notifications from './components/Notifications.vue'
 import ShareModal from './components/ShareModal.vue'
+import SecuritySettings from './components/SecuritySettings.vue'
 
 // State
 const user = ref<{ id: string; username: string; email: string } | null>(null)
@@ -31,6 +32,7 @@ const newInviteCode = ref('')
 const showFriendsList = ref(false)
 const showNotifications = ref(false)
 const showShareModal = ref(false)
+const showSecuritySettings = ref(false)
 
 // 通知未读数
 const unreadCount = ref(0)
@@ -229,6 +231,7 @@ onMounted(async () => {
         @show-notifications="showNotifications = true"
         @show-friends="showFriendsList = true"
         @show-share="showShareModal = true"
+        @show-security="showSecuritySettings = true"
         @logout="logout" 
       />
       
@@ -312,6 +315,11 @@ onMounted(async () => {
         v-if="showShareModal" 
         :family-name="currentFamily?.name"
         @close="showShareModal = false"
+      />
+      
+      <SecuritySettings 
+        v-if="showSecuritySettings" 
+        @close="showSecuritySettings = false"
       />
     </div>
   </div>
