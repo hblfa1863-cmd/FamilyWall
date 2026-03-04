@@ -55,12 +55,6 @@ async function handleRegister(username: string, email: string, password: string,
     alert(result?.error || '注册失败')
   }
 }
-    await loadFamilies()
-    view.value = 'wall'
-  } else {
-    alert(result.error || '注册失败')
-  }
-}
 
 function logout() {
   auth.logout()
