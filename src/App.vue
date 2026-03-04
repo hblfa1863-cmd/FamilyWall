@@ -238,7 +238,7 @@ onMounted(async () => {
       
       <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <!-- View Tabs -->
-        <div v-if="!showAdminPanel" class="mb-6 flex gap-2">
+        <div class="mb-6 flex gap-2 flex-wrap">
           <button 
             @click="view = 'wall'" 
             :class="[
@@ -261,9 +261,8 @@ onMounted(async () => {
           >
             📅 时光轴
           </button>
-        </div>
-        <div v-if="showAdminPanel" class="mb-6 flex gap-2 flex-wrap">
           <button 
+            v-if="canCreateAlbum"
             @click="view = 'albums'" 
             :class="[
               'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
