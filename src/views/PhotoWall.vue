@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import type { Photo } from '../types'
 
 const props = defineProps<{
-  photos: any[]
+  photos: Photo[]
   familyName?: string
   canUpload: boolean
 }>()
 
 const emit = defineEmits<{
-  selectPhoto: [photo: any]
+  selectPhoto: [photo: Photo]
   openUpload: []
   deletePhotos: [ids: string[]]
 }>()
@@ -96,7 +97,7 @@ function formatDate(dateStr: string) {
       </div>
       
       <!-- Action Buttons -->
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
         <!-- Selection Toggle -->
         <button 
           @click="toggleSelectionMode"
@@ -109,6 +110,17 @@ function formatDate(dateStr: string) {
         >
           {{ isSelectionMode ? '取消选择' : '选择' }}
         </button>
+        
+        <!-- Sort Options -->
+        <select 
+          v-if="photos.length > 0 && !isSelectionMode"
+          v-model="sortBy"
+          class="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
+        >
+          <option value="newest">最新优先</option>
+          <option value="oldest">最早优先</option>
+          <option value="name">按名称</option>
+        </select>
         
         <!-- Select All (when in selection mode) -->
         <button 
@@ -128,17 +140,6 @@ function formatDate(dateStr: string) {
           删除 ({{ selectedIds.size }})
         </button>
       </div>
-      
-      <!-- Sort Options -->
-      <select 
-        v-if="photos.length > 0 && !isSelectionMode"
-        v-model="sortBy"
-        class="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
-      >
-        <option value="newest">最新优先</option>
-        <option value="oldest">最早优先</option>
-        <option value="name">按名称</option>
-      </select>
     </div>
     
     <!-- Photo Grid -->

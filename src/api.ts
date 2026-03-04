@@ -1,3 +1,5 @@
+import type { User, Family, Album, Photo, Comment, Like, Friend, Notification } from './types'
+
 // API 配置
 const API_BASE = 'https://family-wall-backend.vercel.app/api'
 

@@ -1,17 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { Photo } from '../types'
 
 const props = defineProps<{
-  photos: any[]
+  photos: Photo[]
 }>()
 
 const emit = defineEmits<{
-  selectPhoto: [photo: any]
+  selectPhoto: [photo: Photo]
 }>()
 
 // 按月份分组的照片
-const timeline = computed(() => {
-  const groups: Record<string, any[]> = {}
+interface TimelineGroup {
+  key: string
+  name: string
+  photos: Photo[]
+}
+
+const timeline = computed((): TimelineGroup[] => {
+  const groups: Record<string, TimelineGroup> = {}
   
   for (const photo of props.photos) {
     const date = new Date(photo.createdAt)
@@ -19,7 +26,7 @@ const timeline = computed(() => {
     const monthName = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })
     
     if (!groups[monthKey]) {
-      groups[monthKey] = { name: monthName, photos: [] }
+      groups[monthKey] = { key: monthKey, name: monthName, photos: [] }
     }
     groups[monthKey].photos.push(photo)
   }
