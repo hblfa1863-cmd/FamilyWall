@@ -19,7 +19,7 @@ function submit() {
       <div class="text-center mb-8">
         <div class="text-5xl mb-4">🏠</div>
         <h1 class="text-3xl font-bold">FamilyWall</h1>
-        <p class="text-white/50 mt-2">家族照片墙</p>
+        <p class="text-white/50 mt-2">照片墙</p>
       </div>
       <form @submit.prevent="submit" class="space-y-4">
         <input v-model="form.email" type="email" placeholder="邮箱" class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30" required />
