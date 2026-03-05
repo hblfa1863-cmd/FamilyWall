@@ -11,8 +11,10 @@ import Timeline from './views/Timeline.vue'
 import AlbumList from './views/AlbumList.vue'
 import UploadModal from './components/UploadModal.vue'
 import AlbumModal from './components/AlbumModal.vue'
+import CreateFamilyModal from './components/CreateFamilyModal.vue'
 import InviteModal from './components/InviteModal.vue'
 import PhotoDetail from './components/PhotoDetail.vue'
+import AlbumDetail from './components/AlbumDetail.vue'
 import FriendsList from './components/FriendsList.vue'
 import Notifications from './components/Notifications.vue'
 import ShareModal from './components/ShareModal.vue'
@@ -28,6 +30,7 @@ const selectedPhoto = ref<any | null>(null)
 const view = ref<'wall' | 'timeline' | 'albums' | 'login' | 'register'>('login')
 const showUploadModal = ref(false)
 const showAlbumModal = ref(false)
+const showCreateFamilyModal = ref(false)
 const showInviteModal = ref(false)
 const newInviteCode = ref('')
 const showFriendsList = ref(false)
@@ -35,8 +38,27 @@ const showNotifications = ref(false)
 const showShareModal = ref(false)
 const showSecuritySettings = ref(false)
 
+// 相册详情
+const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(null)
+
+// 加载相册照片
+async function loadAlbumPhotos(albumId: string, albumName: string) {
+  const { photos: albumPhotos } = await import('./api')
+  const photos = await albumPhotos.getByFamily(currentFamilyId.value)
+  const filtered = photos.filter(p => p.albumId === albumId)
+  viewingAlbum.value = { id: albumId, name: albumName, photos: filtered }
+}
+
+// 关闭相册详情
+function closeAlbumDetail() {
+  viewingAlbum.value = null
+}
+
 // 通知未读数
 const unreadCount = ref(0)
+
+// 新建家族成功后的状态
+const newlyCreatedFamily = ref<{ id: string; name: string; showUpload: boolean } | null>(null)
 
 // Computed
 const currentFamily = computed(() => familiesList.value.find(f => f.id === currentFamilyId.value))
@@ -97,13 +119,40 @@ async function loadPhotos() {
 }
 
 // Actions
-async function createFamily() {
-  const name = prompt('请输入家族名称:')
-  if (!name) return
-  const result = await families.create(name, prompt('请输入家族描述:') || '')
+// 显示新建家族弹窗
+function showCreateFamily() {
+  showCreateFamilyModal.value = true
+}
+
+// 创建家族
+async function handleCreateFamily(data: { name: string; description: string; createAlbum: boolean; albumName: string }) {
+  const result = await families.create(data.name, data.description)
   if (result.id) {
     await loadFamilies()
+    
+    // 如果需要同时创建相册
+    if (data.createAlbum && data.albumName) {
+      await albums.create(result.id, { name: data.albumName })
+      await loadAlbums()
+    }
+    
+    // 切换到新创建的家族
     currentFamilyId.value = result.id
+    await loadPhotos()
+    
+    showCreateFamilyModal.value = false
+    
+    // 显示成功提示和上传入口
+    newlyCreatedFamily.value = { id: result.id, name: data.name, showUpload: true }
+    
+    // 3秒后隐藏提示
+    setTimeout(() => {
+      if (newlyCreatedFamily.value?.id === result.id) {
+        newlyCreatedFamily.value = null
+      }
+    }, 5000)
+  } else {
+    alert(result?.error || '创建家族失败')
   }
 }
 
@@ -227,7 +276,7 @@ onMounted(async () => {
         :current-family-id="currentFamilyId" 
         :unread-count="unreadCount"
         @switch-family="switchFamily" 
-        @create-family="createFamily" 
+        @create-family="showCreateFamily" 
         @show-invite-code="showInviteCode" 
         @show-notifications="showNotifications = true"
         @show-friends="showFriendsList = true"
@@ -237,42 +286,47 @@ onMounted(async () => {
       />
       
       <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <!-- View Tabs -->
-        <div class="mb-6 flex gap-2 flex-wrap">
-          <button 
-            @click="view = 'wall'" 
-            :class="[
-              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
-              view === 'wall' 
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-            ]"
-          >
-            📷 照片墙
-          </button>
-          <button 
-            @click="view = 'timeline'" 
-            :class="[
-              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
-              view === 'timeline' 
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-            ]"
-          >
-            📅 时光轴
-          </button>
-          <button 
-            v-if="canCreateAlbum"
-            @click="view = 'albums'" 
-            :class="[
-              'px-4 py-2 rounded-full text-sm font-medium transition-all duration-300',
-              view === 'albums' 
-                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30' 
-                : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-            ]"
-          >
-            📁 相册管理
-          </button>
+        <!-- View Tabs - Custom Styled -->
+        <div class="mb-6">
+          <div class="inline-flex items-center bg-white rounded-2xl p-1 shadow-sm border border-gray-100">
+            <button 
+              @click="view = 'wall'" 
+              :class="[
+                'px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2',
+                view === 'wall' 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              <span>📷</span>
+              <span>照片墙</span>
+            </button>
+            <button 
+              @click="view = 'timeline'" 
+              :class="[
+                'px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2',
+                view === 'timeline' 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              <span>📅</span>
+              <span>时光轴</span>
+            </button>
+            <button 
+              v-if="canCreateAlbum"
+              @click="view = 'albums'" 
+              :class="[
+                'px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 flex items-center gap-2',
+                view === 'albums' 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              ]"
+            >
+              <span>📁</span>
+              <span>相册管理</span>
+            </button>
+          </div>
         </div>
         
         <AlbumList 
@@ -280,7 +334,18 @@ onMounted(async () => {
           :albums="albumsList" 
           :can-create-album="canCreateAlbum" 
           @create-album="showAlbumModal = true" 
-          @delete-album="deleteAlbum" 
+          @delete-album="deleteAlbum"
+          @open-album="loadAlbumPhotos($event.id, $event.name)"
+        />
+        
+        <!-- Album Detail View -->
+        <AlbumDetail
+          v-else-if="viewingAlbum"
+          :photos="viewingAlbum.photos"
+          :album-name="viewingAlbum.name"
+          @close="closeAlbumDetail"
+          @select-photo="selectedPhoto = $event"
+          @upload="showUploadModal = true"
         />
         
         <Timeline 
@@ -300,7 +365,43 @@ onMounted(async () => {
         />
       </main>
       
+      <!-- New Family Success Toast with Upload Button -->
+      <Transition name="toast">
+        <div 
+          v-if="newlyCreatedFamily"
+          class="fixed top-20 left-1/2 -translate-x-1/2 z-[100] bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-4"
+        >
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🎉</span>
+            <div>
+              <p class="font-medium">家族 "{{ newlyCreatedFamily.name }}" 创建成功！</p>
+              <p class="text-sm text-white/80">立即上传照片记录美好时刻</p>
+            </div>
+          </div>
+          <button 
+            @click="showUploadModal = true; newlyCreatedFamily = null"
+            class="px-4 py-2 bg-white text-green-600 font-medium rounded-full hover:bg-gray-100 transition-colors"
+          >
+            上传照片
+          </button>
+          <button 
+            @click="newlyCreatedFamily = null"
+            class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </Transition>
+      
       <!-- Modals -->
+      <CreateFamilyModal 
+        v-if="showCreateFamilyModal" 
+        @create="handleCreateFamily" 
+        @close="showCreateFamilyModal = false" 
+      />
+      
       <UploadModal 
         v-if="showUploadModal" 
         :albums="albumsList" 
@@ -310,6 +411,8 @@ onMounted(async () => {
       
       <AlbumModal 
         v-if="showAlbumModal" 
+        :existing-albums="albumsList"
+        :family-id="currentFamilyId"
         @create="createAlbum" 
         @close="showAlbumModal = false" 
       />
@@ -364,6 +467,16 @@ onMounted(async () => {
 
 .font-display {
   font-family: 'Playfair Display', serif;
+}
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from,
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
 }
 
 /* Custom scrollbar */

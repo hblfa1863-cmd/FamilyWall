@@ -132,10 +132,18 @@ export const albums = {
   async create(familyId: string, data: { name: string; description?: string; cover?: string; privacy?: string; allowedMembers?: string[] }) {
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: { 
+        'Content-Type': 'application/json', 
+        Authorization: `Bearer ${localStorage.getItem('token')}` 
+      },
       body: JSON.stringify(data),
     })
-    return handleResponse(res)
+    const result = await handleResponse(res)
+    // 如果返回403，尝试更详细的错误信息
+    if (res.status === 403) {
+      return { error: '没有权限创建相册，请确认您是该家族的管理员或成员', id: null }
+    }
+    return result
   },
 
   async delete(albumId: string) {

@@ -1,5 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { albums } from '../api'
+
+const props = defineProps<{
+  existingAlbums?: { name: string }[]
+  familyId?: string
+}>()
 
 const emit = defineEmits<{
   create: [data: { name: string; description: string; privacy: string; cover?: string }]
@@ -12,17 +18,83 @@ const form = ref({
   privacy: 'public'
 })
 
+const isSubmitting = ref(false)
+const error = ref('')
+const nameTouched = ref(false)
+
+// 检查相册名是否重复
+const isDuplicateName = computed(() => {
+  if (!form.value.name.trim() || !props.existingAlbums?.length) return false
+  return props.existingAlbums.some(
+    album => album.name.toLowerCase() === form.value.name.trim().toLowerCase()
+  )
+})
+
+// 表单是否有效
+const isValid = computed(() => {
+  return form.value.name.trim() && !isDuplicateName.value && !isSubmitting.value
+})
+
+// 防抖处理
+let submitTimeout: ReturnType<typeof setTimeout> | null = null
+
 function submit() {
+  // 清除之前的定时器
+  if (submitTimeout) {
+    clearTimeout(submitTimeout)
+  }
+  
+  // 标记已触摸过名称输入框
+  nameTouched.value = true
+  
   if (!form.value.name.trim()) {
-    alert('请输入相册名称')
+    error.value = '请输入相册名称'
     return
   }
-  emit('create', {
-    name: form.value.name.trim(),
-    description: form.value.description.trim(),
-    privacy: form.value.privacy
-  })
+  
+  if (isDuplicateName.value) {
+    error.value = '相册名称已存在'
+    return
+  }
+  
+  // 防止重复提交 - 设置防抖
+  if (isSubmitting.value) return
+  
+  isSubmitting.value = true
+  error.value = ''
+  
+  // 添加防抖延迟
+  submitTimeout = setTimeout(async () => {
+    try {
+      // 如果有 familyId，先检查是否能创建
+      if (props.familyId) {
+        const checkResult = await albums.getByFamily(props.familyId)
+        if (checkResult.error) {
+          error.value = checkResult.error || '无法创建相册'
+          isSubmitting.value = false
+          return
+        }
+      }
+      
+      emit('create', {
+        name: form.value.name.trim(),
+        description: form.value.description.trim(),
+        privacy: form.value.privacy
+      })
+    } catch (e) {
+      error.value = '创建失败，请重试'
+    } finally {
+      isSubmitting.value = false
+    }
+  }, 500)
 }
+
+// 清理定时器
+watch(() => form.value.name, () => {
+  if (submitTimeout) {
+    clearTimeout(submitTimeout)
+  }
+})
 </script>
 
 <template>
@@ -44,6 +116,11 @@ function submit() {
       
       <!-- Form -->
       <form @submit.prevent="submit" class="p-6 space-y-4">
+        <!-- Error Message -->
+        <div v-if="error" class="p-3 bg-red-50 border border-red-200 rounded-xl">
+          <p class="text-sm text-red-600">{{ error }}</p>
+        </div>
+        
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">相册名称</label>
           <input 
@@ -51,8 +128,11 @@ function submit() {
             type="text" 
             placeholder="例如：2024春节聚会"
             class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-            required
+            :class="{ 'border-red-300 focus:ring-red-500/50': (nameTouched && isDuplicateName) || error }"
+            @blur="nameTouched = true"
+            :disabled="isSubmitting"
           />
+          <p v-if="nameTouched && isDuplicateName" class="mt-1 text-xs text-red-500">相册名称已存在，请使用其他名称</p>
         </div>
         
         <div>
@@ -81,9 +161,14 @@ function submit() {
         
         <button 
           type="submit" 
-          class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+          class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          :disabled="!isValid"
         >
-          创 建
+          <svg v-if="isSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ isSubmitting ? '创建中...' : '创 建' }}</span>
         </button>
       </form>
     </div>

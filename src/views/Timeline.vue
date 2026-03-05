@@ -14,6 +14,8 @@ const emit = defineEmits<{
 interface TimelineGroup {
   key: string
   name: string
+  year: number
+  month: number
   photos: Photo[]
 }
 
@@ -26,16 +28,28 @@ const timeline = computed((): TimelineGroup[] => {
     const monthName = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' })
     
     if (!groups[monthKey]) {
-      groups[monthKey] = { key: monthKey, name: monthName, photos: [] }
+      groups[monthKey] = { 
+        key: monthKey, 
+        name: monthName, 
+        year: date.getFullYear(),
+        month: date.getMonth(),
+        photos: [] 
+      }
     }
     groups[monthKey].photos.push(photo)
   }
   
-  // 按月份倒序
+  // 按月份倒序（最新的在前）
   return Object.entries(groups)
     .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([key, value]) => ({ key, ...value }))
 })
+
+// 获取月份的emoji
+function getMonthEmoji(month: number): string {
+  const emojis = ['🥶', '❄️', '🌸', '🌿', '🌧️', '☀️', '🌞', '🏖️', '🍂', '🍁', '🌨️', '🎄']
+  return emojis[month]
+}
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr)
@@ -54,15 +68,19 @@ function formatDate(dateStr: string) {
     </div>
     
     <!-- Timeline -->
-    <div v-if="photos.length > 0" class="space-y-12">
+    <div v-if="photos.length > 0" class="space-y-8">
       <div v-for="group in timeline" :key="group.key" class="relative">
-        <!-- Month Label -->
-        <div class="sticky top-20 z-10 bg-[#FFFEF8]/90 backdrop-blur-sm py-3 mb-6">
-          <h3 class="text-xl font-semibold text-gray-800 flex items-center gap-3">
-            <span class="w-3 h-3 bg-amber-500 rounded-full"></span>
-            {{ group.name }}
-            <span class="text-sm font-normal text-gray-400">{{ group.photos.length }} 张</span>
-          </h3>
+        <!-- Month Header with Line -->
+        <div class="flex items-center gap-4 mb-6">
+          <div class="flex-1 h-px bg-gradient-to-r from-amber-300 to-transparent"></div>
+          <div class="flex items-center gap-3 px-4 py-2 bg-white rounded-full shadow-sm border border-amber-100">
+            <span class="text-2xl">{{ getMonthEmoji(group.month) }}</span>
+            <div class="text-center">
+              <h3 class="text-lg font-semibold text-gray-800">{{ group.name }}</h3>
+              <p class="text-xs text-gray-400">{{ group.photos.length }} 张照片</p>
+            </div>
+          </div>
+          <div class="flex-1 h-px bg-gradient-to-l from-amber-300 to-transparent"></div>
         </div>
         
         <!-- Photos Grid -->
@@ -102,9 +120,6 @@ function formatDate(dateStr: string) {
             </div>
           </div>
         </div>
-        
-        <!-- Connector Line -->
-        <div class="absolute left-[7px] top-16 bottom-0 w-0.5 bg-amber-200 -z-10"></div>
       </div>
     </div>
     

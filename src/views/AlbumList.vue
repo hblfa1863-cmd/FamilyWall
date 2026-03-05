@@ -7,6 +7,7 @@ defineProps<{
 const emit = defineEmits<{
   createAlbum: []
   deleteAlbum: [albumId: string]
+  openAlbum: [album: any]
 }>()
 
 function getPrivacyText(privacy: string) {
@@ -41,7 +42,8 @@ function getPrivacyText(privacy: string) {
       <div 
         v-for="album in albums" 
         :key="album.id"
-        class="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+        class="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+        @click="emit('openAlbum', album)"
       >
         <!-- Cover -->
         <div class="aspect-video bg-gray-100 relative overflow-hidden">

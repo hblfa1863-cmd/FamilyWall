@@ -1,14 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 const emit = defineEmits<{
   register: [username: string, email: string, password: string, inviteCode?: string]
   switchToLogin: []
 }>()
 
-const form = ref({ username: '', email: '', password: '', inviteCode: '' })
+const form = ref({ username: '', email: '', password: '', confirmPassword: '', inviteCode: '' })
+const errors = ref<{ password?: string; confirmPassword?: string }>({})
+
+const isValid = computed(() => {
+  return form.value.username.trim() && 
+         form.value.email.trim() && 
+         form.value.password.length >= 6 &&
+         form.value.password === form.value.confirmPassword
+})
+
+function validate() {
+  errors.value = {}
+  
+  if (form.value.password.length < 6) {
+    errors.value.password = '密码至少需要6位'
+    return false
+  }
+  
+  if (form.value.password !== form.value.confirmPassword) {
+    errors.value.confirmPassword = '两次输入的密码不一致'
+    return false
+  }
+  
+  return true
+}
 
 function submit() {
+  if (!validate()) return
   emit('register', form.value.username, form.value.email, form.value.password, form.value.inviteCode || undefined)
 }
 </script>
@@ -58,8 +83,23 @@ function submit() {
             placeholder="密码（至少6位）"
             minlength="6"
             class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:bg-white transition-all"
+            :class="{ 'border-red-300': errors.password }"
             required 
           />
+          <p v-if="errors.password" class="mt-1 text-xs text-red-500">{{ errors.password }}</p>
+        </div>
+        <div>
+          <label for="confirmPassword" class="sr-only">确认密码</label>
+          <input 
+            id="confirmPassword"
+            v-model="form.confirmPassword" 
+            type="password" 
+            placeholder="确认密码"
+            class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:bg-white transition-all"
+            :class="{ 'border-red-300': errors.confirmPassword }"
+            required 
+          />
+          <p v-if="errors.confirmPassword" class="mt-1 text-xs text-red-500">{{ errors.confirmPassword }}</p>
         </div>
         <div>
           <label for="inviteCode" class="sr-only">邀请码（可选）</label>
@@ -73,7 +113,8 @@ function submit() {
         </div>
         <button 
           type="submit" 
-          class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-2xl hover:shadow-lg hover:shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+          class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold rounded-2xl hover:shadow-lg hover:shadow-amber-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="!isValid"
         >
           注 册
         </button>

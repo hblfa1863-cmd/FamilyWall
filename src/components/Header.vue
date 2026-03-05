@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { User, Family } from '../api'
 
 defineProps<{
@@ -18,6 +19,23 @@ const emit = defineEmits<{
   showSecurity: []
   logout: []
 }>()
+
+const isFamilyDropdownOpen = ref(false)
+
+function toggleDropdown() {
+  isFamilyDropdownOpen.value = !isFamilyDropdownOpen.value
+}
+
+function selectFamily(familyId: string) {
+  emit('switchFamily', familyId)
+  isFamilyDropdownOpen.value = false
+}
+
+// 获取当前家族名称
+function getCurrentFamilyName(families: Family[], currentId: string) {
+  const family = families.find(f => f.id === currentId)
+  return family?.name || '选择家族'
+}
 </script>
 
 <template>
@@ -87,24 +105,65 @@ const emit = defineEmits<{
             </svg>
           </button>
           
-          <!-- Family Selector -->
-          <select 
-            v-if="families.length > 0" 
-            :value="currentFamilyId" 
-            @change="emit('switchFamily', ($event.target as HTMLSelectElement).value)"
-            class="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
-          >
-            <option v-for="f in families" :key="f.id" :value="f.id">{{ f.name }}</option>
-          </select>
+          <!-- Family Selector (Custom Dropdown) -->
+          <div v-if="families.length > 0" class="relative">
+            <button 
+              @click="toggleDropdown"
+              class="flex items-center gap-2 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-gray-700 hover:bg-amber-100 transition-colors"
+            >
+              <span class="font-medium">{{ getCurrentFamilyName(families, currentFamilyId) }}</span>
+              <svg 
+                class="w-4 h-4 transition-transform" 
+                :class="{ 'rotate-180': isFamilyDropdownOpen }"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            
+            <!-- Dropdown Menu -->
+            <Transition name="dropdown">
+              <div 
+                v-if="isFamilyDropdownOpen"
+                class="absolute top-full mt-2 left-0 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50"
+              >
+                <div class="px-3 py-2 text-xs text-gray-400 uppercase tracking-wider">切换家族</div>
+                <button
+                  v-for="f in families"
+                  :key="f.id"
+                  @click="selectFamily(f.id)"
+                  :class="[
+                    'w-full px-4 py-2.5 text-left text-sm flex items-center justify-between hover:bg-amber-50 transition-colors',
+                    f.id === currentFamilyId ? 'bg-amber-50 text-amber-600 font-medium' : 'text-gray-700'
+                  ]"
+                >
+                  <span>{{ f.name }}</span>
+                  <span v-if="f.id === currentFamilyId" class="text-amber-500">✓</span>
+                </button>
+                <div class="border-t border-gray-100 mt-2 pt-2">
+                  <button 
+                    @click="emit('createFamily'); isFamilyDropdownOpen = false"
+                    class="w-full px-4 py-2.5 text-left text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    新建家族
+                  </button>
+                </div>
+              </div>
+            </Transition>
+            
+            <!-- Click outside to close -->
+            <div 
+              v-if="isFamilyDropdownOpen" 
+              class="fixed inset-0 z-40"
+              @click="isFamilyDropdownOpen = false"
+            ></div>
+          </div>
           
-          <!-- Action Buttons -->
-          <button 
-            @click="emit('createFamily')" 
-            class="hidden sm:inline-flex px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-gray-700 hover:bg-amber-100 transition-colors"
-          >
-            + 新建家族
-          </button>
           
+          <!-- Action Buttons (hidden since we have dropdown) -->
           <button 
             @click="emit('showInviteCode')" 
             class="hidden sm:inline-flex px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-sm text-gray-700 hover:bg-amber-100 transition-colors"
@@ -126,3 +185,16 @@ const emit = defineEmits<{
     </div>
   </header>
 </template>
+
+<style scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+</style>
