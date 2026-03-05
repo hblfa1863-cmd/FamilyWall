@@ -344,7 +344,7 @@ async function addTestData() {
         
         <!-- Version Info -->
         <div class="text-center pt-4 pb-2">
-          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_40</button>
+          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_41</button>
         </div>
         
         <!-- Developer Mode Section -->
