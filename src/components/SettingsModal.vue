@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
+
+// Build_38 - 确认组件被加载
+console.log('SettingsModal loaded - Build_38')
 
 const props = defineProps<{
   locale?: Locale
