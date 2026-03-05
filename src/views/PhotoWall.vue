@@ -111,16 +111,27 @@ function formatDate(dateStr: string) {
           {{ isSelectionMode ? '取消选择' : '选择' }}
         </button>
         
-        <!-- Sort Options -->
-        <select 
-          v-if="photos.length > 0 && !isSelectionMode"
-          v-model="sortBy"
-          class="px-3 py-2 bg-white border border-gray-200 rounded-full text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50 cursor-pointer"
-        >
-          <option value="newest">最新优先</option>
-          <option value="oldest">最早优先</option>
-          <option value="name">按名称</option>
-        </select>
+        <!-- Sort Options - Custom Button Group -->
+        <div v-if="photos.length > 0 && !isSelectionMode" class="flex items-center bg-white rounded-full p-1 border border-gray-200">
+          <button 
+            v-for="option in [
+              { value: 'newest', label: '最新', icon: '⬆️' },
+              { value: 'oldest', label: '最早', icon: '⬇️' },
+              { value: 'name', label: '名称', icon: '📝' }
+            ]"
+            :key="option.value"
+            @click="sortBy = option.value as SortOption"
+            :class="[
+              'px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1',
+              sortBy === option.value 
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white' 
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+          >
+            <span>{{ option.icon }}</span>
+            <span>{{ option.label }}</span>
+          </button>
+        </div>
         
         <!-- Select All (when in selection mode) -->
         <button 

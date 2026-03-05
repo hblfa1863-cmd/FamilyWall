@@ -7,7 +7,7 @@ const emit = defineEmits<{
 }>()
 
 const form = ref({ username: '', email: '', password: '', confirmPassword: '', inviteCode: '' })
-const errors = ref<{ password?: string; confirmPassword?: string }>({})
+const errors = ref<{ password?: string; confirmPassword?: string; inviteCode?: string }>()
 
 const isValid = computed(() => {
   return form.value.username.trim() && 
@@ -20,12 +20,18 @@ function validate() {
   errors.value = {}
   
   if (form.value.password.length < 6) {
-    errors.value.password = '密码至少需要6位'
+    errors.value = { password: '密码至少需要6位' }
     return false
   }
   
   if (form.value.password !== form.value.confirmPassword) {
-    errors.value.confirmPassword = '两次输入的密码不一致'
+    errors.value = { confirmPassword: '两次输入的密码不一致' }
+    return false
+  }
+  
+  // 邀请码格式验证（简单检查）
+  if (form.value.inviteCode.trim() && form.value.inviteCode.trim().length < 6) {
+    errors.value = { inviteCode: '邀请码格式不正确' }
     return false
   }
   
@@ -109,7 +115,9 @@ function submit() {
             type="text" 
             placeholder="邀请码（可选）"
             class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:bg-white transition-all"
+            :class="{ 'border-red-300': errors?.inviteCode }"
           />
+          <p v-if="errors?.inviteCode" class="mt-1 text-xs text-red-500">{{ errors.inviteCode }}</p>
         </div>
         <button 
           type="submit" 

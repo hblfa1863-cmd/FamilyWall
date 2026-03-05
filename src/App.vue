@@ -458,7 +458,8 @@ onMounted(async () => {
       
       <UploadModal 
         v-if="showUploadModal" 
-        :albums="albumsList" 
+        :albums="albumsList"
+        :family-id="currentFamilyId"
         @upload="uploadPhoto" 
         @close="showUploadModal = false" 
       />
