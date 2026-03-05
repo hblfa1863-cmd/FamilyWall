@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, provide } from 'vue'
 import { auth, families, albums, photos } from './api'
+import { t, type Locale, messages } from './i18n'
 
 // Components
 import LoginView from './views/LoginView.vue'
@@ -19,6 +20,19 @@ import FriendsList from './components/FriendsList.vue'
 import Notifications from './components/Notifications.vue'
 import ShareModal from './components/ShareModal.vue'
 import SecuritySettings from './components/SecuritySettings.vue'
+import ProfileModal from './components/ProfileModal.vue'
+
+// 多语言状态
+const locale = ref<Locale>('zh')
+
+// 提供翻译函数给子组件
+provide('locale', locale)
+provide('t', (key: string) => t(key, locale.value))
+
+// 更新语言
+function setLocale(newLocale: Locale) {
+  locale.value = newLocale
+}
 
 // State
 const user = ref<{ id: string; username: string; email: string } | null>(null)
@@ -37,6 +51,7 @@ const showFriendsList = ref(false)
 const showNotifications = ref(false)
 const showShareModal = ref(false)
 const showSecuritySettings = ref(false)
+const showProfileModal = ref(false)
 
 // 相册详情
 const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(null)
@@ -62,10 +77,17 @@ const newlyCreatedFamily = ref<{ id: string; name: string; showUpload: boolean }
 
 // Computed
 const currentFamily = computed(() => familiesList.value.find(f => f.id === currentFamilyId.value))
-const canCreateAlbum = computed(() => currentFamily.value?.role === 'admin' || currentFamily.value?.role === 'maintainer')
+// 新用户没有家族时，允许创建家族和相册
+const canCreateAlbum = computed(() => {
+  if (!currentFamilyId.value) return true
+  return currentFamily.value?.role === 'admin' || currentFamily.value?.role === 'maintainer'
+})
 const canManageMembers = computed(() => currentFamily.value?.role === 'admin')
-const canUpload = computed(() => !!currentFamily.value?.role)
-const showAdminPanel = computed(() => canManageMembers.value || canCreateAlbum.value)
+const canUpload = computed(() => !!currentFamilyId.value || familiesList.value.length === 0)
+const showAdminPanel = computed(() => canManageMembers.value || canCreateAlbum.value || familiesList.value.length === 0)
+
+// 是否需要引导创建家族
+const needsFamilyGuide = computed(() => familiesList.value.length === 0 && currentFamilyId.value === '')
 
 // Auth
 async function handleLogin(email: string, password: string) {
@@ -282,10 +304,42 @@ onMounted(async () => {
         @show-friends="showFriendsList = true"
         @show-share="showShareModal = true"
         @show-security="showSecuritySettings = true"
+        @show-profile="showProfileModal = true"
         @logout="logout" 
       />
       
       <main class="pt-20 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <!-- New User Guide - Create Family -->
+        <div v-if="needsFamilyGuide" class="mb-8">
+          <div class="bg-white rounded-3xl p-8 shadow-lg border border-amber-100 text-center">
+            <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-4xl shadow-lg shadow-amber-500/30">
+              🏠
+            </div>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-2">欢迎使用照片墙！</h2>
+            <p class="text-gray-500 mb-6">创建或加入一个家族，开始记录美好回忆</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+              <button 
+                @click="showCreateFamilyModal = true"
+                class="px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium rounded-full hover:shadow-lg hover:shadow-amber-500/30 transition-all"
+              >
+                + 创建家族
+              </button>
+              <div class="flex items-center gap-2">
+                <input 
+                  id="joinFamilyCode"
+                  type="text" 
+                  placeholder="输入邀请码"
+                  class="px-4 py-3 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 w-32"
+                />
+                <button 
+                  class="px-4 py-3 bg-white border border-gray-200 text-gray-600 font-medium rounded-full hover:bg-gray-50 transition-all text-sm"
+                >
+                  加入
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- View Tabs - Custom Styled -->
         <div class="mb-6">
           <div class="inline-flex items-center bg-white rounded-2xl p-1 shadow-sm border border-gray-100">
@@ -447,12 +501,21 @@ onMounted(async () => {
       <ShareModal 
         v-if="showShareModal" 
         :family-name="currentFamily?.name"
+        :current-locale="locale"
         @close="showShareModal = false"
       />
       
       <SecuritySettings 
         v-if="showSecuritySettings" 
         @close="showSecuritySettings = false"
+      />
+      
+      <ProfileModal 
+        v-if="showProfileModal" 
+        :current-locale="locale"
+        @close="showProfileModal = false"
+        @update-user="(data) => { user = { ...user, ...data } }"
+        @locale-change="setLocale"
       />
     </div>
   </div>

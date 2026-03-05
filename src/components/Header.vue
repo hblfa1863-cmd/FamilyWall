@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
 import type { User, Family } from '../api'
+import { t, type Locale } from '../i18n'
+
+const locale = inject<{ value: Locale }>('locale', ref({ value: 'zh' }))
 
 defineProps<{
   user: User | null
@@ -17,6 +20,7 @@ const emit = defineEmits<{
   showFriends: []
   showShare: []
   showSecurity: []
+  showProfile: []
   logout: []
 }>()
 
@@ -172,13 +176,21 @@ function getCurrentFamilyName(families: Family[], currentId: string) {
           </button>
           
           <!-- User Info -->
-          <span class="text-sm text-gray-500 hidden sm:inline">{{ user?.username }}</span>
+          <button 
+            @click="emit('showProfile')"
+            class="flex items-center gap-2 text-sm text-gray-500 hover:text-amber-600 transition-colors"
+          >
+            <div class="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+              {{ user?.username?.charAt(0).toUpperCase() || '?' }}
+            </div>
+            <span class="hidden sm:inline">{{ user?.username }}</span>
+          </button>
           
           <button 
             @click="emit('logout')" 
             class="text-amber-600 hover:text-amber-700 text-sm font-medium"
           >
-            退出
+            {{ t('nav.logout', locale) }}
           </button>
         </div>
       </div>
