@@ -14,6 +14,15 @@ const handleResponse = async (res: Response) => {
   return data.data
 }
 
+// 验证邀请码
+export const validateInviteCode = async (code: string) => {
+  if (!code) return { valid: true }
+  const res = await fetch(`${API_BASE}/families/validate-invite?code=${encodeURIComponent(code)}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  })
+  return handleResponse(res)
+}
+
 export const auth = {
   async login(email: string, password: string) {
     const res = await fetch(`${API_BASE}/auth/login`, {
@@ -123,13 +132,21 @@ export const families = {
 
 export const albums = {
   async getByFamily(familyId: string) {
+    if (!familyId) return []
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
+    if (res.status === 403) {
+      console.warn('Access to albums forbidden')
+      return []
+    }
     return handleResponse(res)
   },
 
   async create(familyId: string, data: { name: string; description?: string; cover?: string; privacy?: string; allowedMembers?: string[] }) {
+    if (!familyId) {
+      return { error: '请先选择一个家族', id: null }
+    }
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
       method: 'POST',
       headers: { 
@@ -139,9 +156,9 @@ export const albums = {
       body: JSON.stringify(data),
     })
     const result = await handleResponse(res)
-    // 如果返回403，尝试更详细的错误信息
+    // 如果返回403，提供更友好的错误信息
     if (res.status === 403) {
-      return { error: '没有权限创建相册，请确认您是该家族的管理员或成员', id: null }
+      return { error: '没有权限创建相册，请确认您已是该家族成员', id: null }
     }
     return result
   },
@@ -151,6 +168,17 @@ export const albums = {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
     })
+    return handleResponse(res)
+  },
+  
+  // 获取单个相册详情
+  async getById(albumId: string) {
+    const res = await fetch(`${API_BASE}/albums/${albumId}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    if (res.status === 403) {
+      return { error: '没有权限访问此相册' }
+    }
     return handleResponse(res)
   },
 }

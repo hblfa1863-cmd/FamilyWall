@@ -21,6 +21,7 @@ import Notifications from './components/Notifications.vue'
 import ShareModal from './components/ShareModal.vue'
 import SecuritySettings from './components/SecuritySettings.vue'
 import ProfileModal from './components/ProfileModal.vue'
+import SettingsModal from './components/SettingsModal.vue'
 
 // 多语言状态
 const locale = ref<Locale>('zh')
@@ -52,6 +53,10 @@ const showNotifications = ref(false)
 const showShareModal = ref(false)
 const showSecuritySettings = ref(false)
 const showProfileModal = ref(false)
+const showSettingsModal = ref(false)
+
+// 上传模态框预选的相册ID
+const preselectedAlbumId = ref<string | undefined>(undefined)
 
 // 相册详情
 const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(null)
@@ -67,6 +72,12 @@ async function loadAlbumPhotos(albumId: string, albumName: string) {
 // 关闭相册详情
 function closeAlbumDetail() {
   viewingAlbum.value = null
+}
+
+// 打开上传模态框（可选预选相册ID）
+function openUploadModal(albumId?: string) {
+  preselectedAlbumId.value = albumId
+  showUploadModal.value = true
 }
 
 // 通知未读数
@@ -305,6 +316,7 @@ onMounted(async () => {
         @show-share="showShareModal = true"
         @show-security="showSecuritySettings = true"
         @show-profile="showProfileModal = true"
+        @show-settings="showSettingsModal = true"
         @logout="logout" 
       />
       
@@ -399,7 +411,7 @@ onMounted(async () => {
           :album-name="viewingAlbum.name"
           @close="closeAlbumDetail"
           @select-photo="selectedPhoto = $event"
-          @upload="showUploadModal = true"
+          @upload="openUploadModal(viewingAlbum?.id)"
         />
         
         <Timeline 
@@ -414,7 +426,7 @@ onMounted(async () => {
           :family-name="currentFamily?.name" 
           :can-upload="canUpload" 
           @select-photo="selectedPhoto = $event" 
-          @open-upload="showUploadModal = true"
+          @open-upload="openUploadModal()"
           @delete-photos="deletePhotos"
         />
       </main>
@@ -460,8 +472,9 @@ onMounted(async () => {
         v-if="showUploadModal" 
         :albums="albumsList"
         :family-id="currentFamilyId"
+        :preselected-album-id="preselectedAlbumId"
         @upload="uploadPhoto" 
-        @close="showUploadModal = false" 
+        @close="showUploadModal = false; preselectedAlbumId = undefined" 
       />
       
       <AlbumModal 
@@ -516,6 +529,13 @@ onMounted(async () => {
         :current-locale="locale"
         @close="showProfileModal = false"
         @update-user="(data) => { user = { ...user, ...data } }"
+        @locale-change="setLocale"
+      />
+      
+      <SettingsModal 
+        v-if="showSettingsModal" 
+        @close="showSettingsModal = false"
+        @logout="logout"
         @locale-change="setLocale"
       />
     </div>

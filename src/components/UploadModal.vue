@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { albums } from '../api'
 
 const props = defineProps<{
   albums: any[]
   familyId: string
+  preselectedAlbumId?: string
 }>()
 
 const emit = defineEmits<{
@@ -12,12 +13,12 @@ const emit = defineEmits<{
   close: []
 }>()
 
-// 步骤：1-选择/创建相册  2-上传照片
-const step = ref(props.albums.length > 0 ? 1 : 2)
+// 如果有预选相册ID，直接跳到步骤2
+const step = ref(props.preselectedAlbumId ? 2 : (props.albums.length > 0 ? 1 : 2))
 
 // 相册选择/创建
 const albumMode = ref<'select' | 'create'>('select')
-const selectedAlbumId = ref('')
+const selectedAlbumId = ref(props.preselectedAlbumId || '')
 
 // 新建相册表单
 const newAlbum = ref({

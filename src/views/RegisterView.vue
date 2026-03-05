@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { auth, validateInviteCode } from '../api'
 
 const emit = defineEmits<{
   register: [username: string, email: string, password: string, inviteCode?: string]
@@ -8,6 +9,8 @@ const emit = defineEmits<{
 
 const form = ref({ username: '', email: '', password: '', confirmPassword: '', inviteCode: '' })
 const errors = ref<{ password?: string; confirmPassword?: string; inviteCode?: string }>()
+const isChecking = ref(false)
+const inviteCodeValid = ref<boolean | null>(null)
 
 const isValid = computed(() => {
   return form.value.username.trim() && 
@@ -15,6 +18,36 @@ const isValid = computed(() => {
          form.value.password.length >= 6 &&
          form.value.password === form.value.confirmPassword
 })
+
+// 验证邀请码
+async function checkInviteCode() {
+  if (!form.value.inviteCode.trim()) {
+    inviteCodeValid.value = null
+    errors.value = {}
+    return true
+  }
+  
+  isChecking.value = true
+  errors.value = {}
+  
+  try {
+    const result = await validateInviteCode(form.value.inviteCode.trim())
+    if (result && result.valid === false) {
+      errors.value = { inviteCode: '邀请码无效或已过期' }
+      inviteCodeValid.value = false
+      return false
+    }
+    inviteCodeValid.value = true
+    return true
+  } catch (e) {
+    // API调用失败时允许跳过
+    console.log('Invite code validation skipped:', e)
+    inviteCodeValid.value = true
+    return true
+  } finally {
+    isChecking.value = false
+  }
+}
 
 function validate() {
   errors.value = {}
@@ -29,17 +62,16 @@ function validate() {
     return false
   }
   
-  // 邀请码格式验证（简单检查）
-  if (form.value.inviteCode.trim() && form.value.inviteCode.trim().length < 6) {
-    errors.value = { inviteCode: '邀请码格式不正确' }
-    return false
-  }
-  
   return true
 }
 
-function submit() {
+async function submit() {
   if (!validate()) return
+  
+  // 验证邀请码
+  const isValidCode = await checkInviteCode()
+  if (!isValidCode) return
+  
   emit('register', form.value.username, form.value.email, form.value.password, form.value.inviteCode || undefined)
 }
 </script>
@@ -115,9 +147,12 @@ function submit() {
             type="text" 
             placeholder="邀请码（可选）"
             class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:bg-white transition-all"
-            :class="{ 'border-red-300': errors?.inviteCode }"
+            :class="{ 'border-red-300': errors?.inviteCode, 'border-green-300': inviteCodeValid === true }"
+            @blur="checkInviteCode"
           />
           <p v-if="errors?.inviteCode" class="mt-1 text-xs text-red-500">{{ errors.inviteCode }}</p>
+          <p v-else-if="isChecking" class="mt-1 text-xs text-gray-400">正在验证邀请码...</p>
+          <p v-else-if="inviteCodeValid === true" class="mt-1 text-xs text-green-500">✓ 邀请码有效</p>
         </div>
         <button 
           type="submit" 
