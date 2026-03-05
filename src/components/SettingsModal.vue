@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref, inject, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
+
+const props = defineProps<{
+  locale?: Locale
+}>()
 
 const emit = defineEmits<{
   close: []
@@ -9,7 +13,15 @@ const emit = defineEmits<{
   localeChange: [locale: Locale]
 }>()
 
-const currentLocale = ref<Locale>('zh')
+// 使用props中的locale
+const locale = ref<Locale>(props.locale || 'zh')
+
+// 监听props变化
+watch(() => props.locale, (newVal) => {
+  if (newVal) {
+    locale.value = newVal
+  }
+})
 
 // 开发者模式
 const isDevMode = ref(false)
@@ -38,8 +50,13 @@ const languages = [
   { value: 'en', label: 'English', flag: '🇺🇸' }
 ]
 
+function selectLanguage(newLocale: Locale) {
+  locale.value = newLocale
+  emit('localeChange', newLocale)
+}
+
 function selectLanguage(locale: Locale) {
-  currentLocale.value = locale
+  locale.value = locale
   emit('localeChange', locale)
 }
 
@@ -203,7 +220,7 @@ async function addTestData() {
     <div class="relative bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[85vh] overflow-hidden animate-slide-up sm:animate-scale-in">
       <!-- Header -->
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-        <h3 class="text-lg font-semibold text-gray-800">{{ t('nav.security', currentLocale) }}</h3>
+        <h3 class="text-lg font-semibold text-gray-800">{{ t('nav.security', locale) }}</h3>
         <button @click="emit('close')" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
           <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -223,7 +240,7 @@ async function addTestData() {
               @click="selectLanguage(lang.value as Locale)"
               :class="[
                 'flex-1 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2',
-                currentLocale === lang.value 
+                locale === lang.value 
                   ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md' 
                   : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
               ]"
@@ -244,7 +261,7 @@ async function addTestData() {
               👤
             </div>
             <div class="text-left">
-              <p class="font-medium text-gray-800">{{ t('profile.edit', currentLocale) }}</p>
+              <p class="font-medium text-gray-800">{{ t('profile.edit', locale) }}</p>
               <p class="text-xs text-gray-500">修改个人资料</p>
             </div>
             <svg class="w-5 h-5 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -295,7 +312,7 @@ async function addTestData() {
               🚪
             </div>
             <div class="text-left">
-              <p class="font-medium text-red-600">{{ t('nav.logout', currentLocale) }}</p>
+              <p class="font-medium text-red-600">{{ t('nav.logout', locale) }}</p>
               <p class="text-xs text-red-400">退出当前账户</p>
             </div>
             <svg class="w-5 h-5 text-red-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">

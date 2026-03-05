@@ -3,6 +3,13 @@ import type { User, Family, Album, Photo, Comment, Like, Friend, Notification } 
 // API 配置
 const API_BASE = 'https://family-wall-backend.vercel.app/api'
 
+// 缓存控制头 - 防止304
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0'
+}
+
 // 辅助函数：统一处理响应，兼容成功和失败格式
 const handleResponse = async (res: Response) => {
   const data = await res.json()
@@ -12,6 +19,15 @@ const handleResponse = async (res: Response) => {
   }
   // 成功响应
   return data.data
+}
+
+// 获取带缓存控制的headers
+const getHeaders = (extraHeaders: Record<string, string> = {}) => {
+  return {
+    ...NO_CACHE_HEADERS,
+    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    ...extraHeaders
+  }
 }
 
 // 验证邀请码
