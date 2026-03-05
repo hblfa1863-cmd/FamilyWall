@@ -24,10 +24,19 @@ const handleResponse = async (res: Response) => {
 // 获取带缓存控制的headers
 const getHeaders = (extraHeaders: Record<string, string> = {}) => {
   return {
-    ...NO_CACHE_HEADERS,
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'If-None-Match': '',  // 强制不使用缓存
     'Authorization': `Bearer ${localStorage.getItem('token')}`,
     ...extraHeaders
   }
+}
+
+// 添加时间戳防止缓存
+const noCacheUrl = (url: string) => {
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}_t=${Date.now()}`
 }
 
 // 验证邀请码
@@ -93,7 +102,7 @@ export const auth = {
 export const families = {
   async getAll() {
     const res = await fetch(`${API_BASE}/families`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders(),
     })
     return handleResponse(res)
   },
@@ -101,7 +110,7 @@ export const families = {
   async create(name: string, description: string) {
     const res = await fetch(`${API_BASE}/families`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ name, description }),
     })
     return handleResponse(res)
@@ -150,7 +159,7 @@ export const albums = {
   async getByFamily(familyId: string) {
     if (!familyId) return []
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders(),
     })
     if (res.status === 403) {
       console.warn('Access to albums forbidden')
@@ -202,7 +211,7 @@ export const albums = {
 export const photos = {
   async getByFamily(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}/photos`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders(),
     })
     return handleResponse(res)
   },
@@ -210,7 +219,7 @@ export const photos = {
   async upload(familyId: string, data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }) {
     const res = await fetch(`${API_BASE}/families/${familyId}/photos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     })
     return handleResponse(res)
@@ -218,7 +227,7 @@ export const photos = {
 
   async getById(photoId: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders(),
     })
     return handleResponse(res)
   },
@@ -226,7 +235,7 @@ export const photos = {
   async delete(photoId: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getHeaders(),
     })
     return handleResponse(res)
   },

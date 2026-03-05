@@ -11,6 +11,7 @@ const emit = defineEmits<{
   close: []
   logout: []
   localeChange: [locale: Locale]
+  reloadPhotos: []
 }>()
 
 // 使用props中的locale
@@ -202,6 +203,7 @@ async function addTestData() {
     }
     
     testDataMessage.value = `成功添加 ${successCount} 张测试照片！`
+    emit('reloadPhotos')
     
   } catch (e) {
     testDataMessage.value = '添加测试数据失败: ' + String(e)

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
-const API_BASE = 'https://family-wall-backend.vercel.app/api'
-
 const emit = defineEmits<{
   register: [username: string, email: string, password: string, inviteCode?: string]
   switchToLogin: []
@@ -32,8 +30,11 @@ async function checkInviteCode() {
   errors.value = {}
   
   try {
-    const res = await fetch(`${API_BASE}/families/validate-invite?code=${encodeURIComponent(form.value.inviteCode.trim())}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(`https://family-wall-backend.vercel.app/api/families/validate-invite?code=${encodeURIComponent(form.value.inviteCode.trim())}&_t=${Date.now()}`, {
+      headers: { 
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      },
     })
     const data = await res.json()
     if (data.success === false || data.data?.valid === false) {

@@ -537,6 +537,7 @@ onMounted(async () => {
         @close="showSettingsModal = false"
         @logout="logout"
         @locale-change="setLocale"
+        @reload-photos="loadPhotos"
       />
     </div>
   </div>
