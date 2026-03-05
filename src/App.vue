@@ -533,6 +533,7 @@ onMounted(async () => {
       
       <SettingsModal 
         v-if="showSettingsModal" 
+        :locale="locale"
         @close="showSettingsModal = false"
         @logout="logout"
         @locale-change="setLocale"
