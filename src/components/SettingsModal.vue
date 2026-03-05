@@ -59,11 +59,6 @@ function selectLanguage(newLocale: Locale) {
   emit('localeChange', newLocale)
 }
 
-function selectLanguage(locale: Locale) {
-  locale.value = locale
-  emit('localeChange', locale)
-}
-
 function handleLogout() {
   emit('logout')
   emit('close')
