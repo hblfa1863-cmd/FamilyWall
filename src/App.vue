@@ -22,6 +22,7 @@ import ShareModal from './components/ShareModal.vue'
 import SecuritySettings from './components/SecuritySettings.vue'
 import ProfileModal from './components/ProfileModal.vue'
 import SettingsModal from './components/SettingsModal.vue'
+console.log('SettingsModal imported successfully')
 
 // 多语言状态
 const locale = ref<Locale>('zh')
