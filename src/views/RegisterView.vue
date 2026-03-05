@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { auth, validateInviteCode } from '../api'
+
+const API_BASE = 'https://family-wall-backend.vercel.app/api'
 
 const emit = defineEmits<{
   register: [username: string, email: string, password: string, inviteCode?: string]
@@ -31,8 +32,11 @@ async function checkInviteCode() {
   errors.value = {}
   
   try {
-    const result = await validateInviteCode(form.value.inviteCode.trim())
-    if (result && result.valid === false) {
+    const res = await fetch(`${API_BASE}/families/validate-invite?code=${encodeURIComponent(form.value.inviteCode.trim())}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    })
+    const data = await res.json()
+    if (data.success === false || data.data?.valid === false) {
       errors.value = { inviteCode: '邀请码无效或已过期' }
       inviteCodeValid.value = false
       return false
@@ -40,7 +44,6 @@ async function checkInviteCode() {
     inviteCodeValid.value = true
     return true
   } catch (e) {
-    // API调用失败时允许跳过
     console.log('Invite code validation skipped:', e)
     inviteCodeValid.value = true
     return true

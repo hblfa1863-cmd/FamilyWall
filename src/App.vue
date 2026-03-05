@@ -63,9 +63,8 @@ const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(nul
 
 // 加载相册照片
 async function loadAlbumPhotos(albumId: string, albumName: string) {
-  const { photos: albumPhotos } = await import('./api')
-  const photos = await albumPhotos.getByFamily(currentFamilyId.value)
-  const filtered = photos.filter(p => p.albumId === albumId)
+  const allPhotos = await photos.getByFamily(currentFamilyId.value)
+  const filtered = allPhotos.filter((p: any) => p.albumId === albumId)
   viewingAlbum.value = { id: albumId, name: albumName, photos: filtered }
 }
 
