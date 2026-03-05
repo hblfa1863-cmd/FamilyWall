@@ -3,47 +3,34 @@ import type { User, Family, Album, Photo, Comment, Like, Friend, Notification } 
 // API 配置
 const API_BASE = 'https://family-wall-backend.vercel.app/api'
 
-// 缓存控制头 - 防止304
-const NO_CACHE_HEADERS = {
-  'Cache-Control': 'no-cache, no-store, must-revalidate',
-  'Pragma': 'no-cache',
-  'Expires': '0'
-}
-
 // 辅助函数：统一处理响应，兼容成功和失败格式
 const handleResponse = async (res: Response) => {
   const data = await res.json()
   if (data.success === false) {
-    // 后端返回错误
     return { error: data.error, ...data }
   }
-  // 成功响应
   return data.data
 }
 
-// 获取带缓存控制的headers
-const getHeaders = (extraHeaders: Record<string, string> = {}) => {
-  return {
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'If-None-Match': '',  // 强制不使用缓存
-    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-    ...extraHeaders
-  }
-}
+// 获取带缓存控制的headers - 所有API调用必须使用这个函数
+const getAuthHeaders = (extraHeaders: Record<string, string> = {}) => ({
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+  'Authorization': `Bearer ${localStorage.getItem('token')}`,
+  ...extraHeaders
+})
 
-// 添加时间戳防止缓存
-const noCacheUrl = (url: string) => {
+// 添加时间戳到URL防止缓存
+const addCacheBuster = (url: string) => {
   const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}_t=${Date.now()}`
+  return `${url}${separator}_=${Date.now()}`
 }
 
-// 验证邀请码
 export const validateInviteCode = async (code: string) => {
   if (!code) return { valid: true }
-  const res = await fetch(`${API_BASE}/families/validate-invite?code=${encodeURIComponent(code)}`, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  const res = await fetch(addCacheBuster(`${API_BASE}/families/validate-invite?code=${encodeURIComponent(code)}`), {
+    headers: getAuthHeaders(),
   })
   return handleResponse(res)
 }
@@ -78,8 +65,8 @@ export const auth = {
   },
 
   async getMe() {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/auth/me`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -101,8 +88,8 @@ export const auth = {
 
 export const families = {
   async getAll() {
-    const res = await fetch(`${API_BASE}/families`, {
-      headers: getHeaders(),
+    const res = await fetch(addCacheBuster(`${API_BASE}/families`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -110,22 +97,22 @@ export const families = {
   async create(name: string, description: string) {
     const res = await fetch(`${API_BASE}/families`, {
       method: 'POST',
-      headers: getHeaders({ 'Content-Type': 'application/json' }),
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ name, description }),
     })
     return handleResponse(res)
   },
 
   async getMembers(familyId: string) {
-    const res = await fetch(`${API_BASE}/families/${familyId}/members`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/families/${familyId}/members`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
   async getInviteCode(familyId: string) {
-    const res = await fetch(`${API_BASE}/families/${familyId}/invite-code`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/families/${familyId}/invite-code`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -133,7 +120,7 @@ export const families = {
   async regenerateInviteCode(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}/regenerate-invite-code`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -141,7 +128,7 @@ export const families = {
   async leave(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}/leave`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -149,7 +136,7 @@ export const families = {
   async delete(familyId: string) {
     const res = await fetch(`${API_BASE}/families/${familyId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -158,8 +145,8 @@ export const families = {
 export const albums = {
   async getByFamily(familyId: string) {
     if (!familyId) return []
-    const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
-      headers: getHeaders(),
+    const res = await fetch(addCacheBuster(`${API_BASE}/families/${familyId}/albums`), {
+      headers: getAuthHeaders(),
     })
     if (res.status === 403) {
       console.warn('Access to albums forbidden')
@@ -174,14 +161,10 @@ export const albums = {
     }
     const res = await fetch(`${API_BASE}/families/${familyId}/albums`, {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json', 
-        Authorization: `Bearer ${localStorage.getItem('token')}` 
-      },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     })
     const result = await handleResponse(res)
-    // 如果返回403，提供更友好的错误信息
     if (res.status === 403) {
       return { error: '没有权限创建相册，请确认您已是该家族成员', id: null }
     }
@@ -191,15 +174,14 @@ export const albums = {
   async delete(albumId: string) {
     const res = await fetch(`${API_BASE}/albums/${albumId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
-  
-  // 获取单个相册详情
+
   async getById(albumId: string) {
-    const res = await fetch(`${API_BASE}/albums/${albumId}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/albums/${albumId}`), {
+      headers: getAuthHeaders(),
     })
     if (res.status === 403) {
       return { error: '没有权限访问此相册' }
@@ -210,8 +192,8 @@ export const albums = {
 
 export const photos = {
   async getByFamily(familyId: string) {
-    const res = await fetch(`${API_BASE}/families/${familyId}/photos`, {
-      headers: getHeaders(),
+    const res = await fetch(addCacheBuster(`${API_BASE}/families/${familyId}/photos`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -219,15 +201,15 @@ export const photos = {
   async upload(familyId: string, data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }) {
     const res = await fetch(`${API_BASE}/families/${familyId}/photos`, {
       method: 'POST',
-      headers: getHeaders({ 'Content-Type': 'application/json' }),
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(data),
     })
     return handleResponse(res)
   },
 
   async getById(photoId: string) {
-    const res = await fetch(`${API_BASE}/photos/${photoId}`, {
-      headers: getHeaders(),
+    const res = await fetch(addCacheBuster(`${API_BASE}/photos/${photoId}`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -235,7 +217,7 @@ export const photos = {
   async delete(photoId: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}`, {
       method: 'DELETE',
-      headers: getHeaders(),
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
@@ -243,13 +225,12 @@ export const photos = {
   async addComment(photoId: string, content: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}/comments`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ content }),
     })
     return handleResponse(res)
   },
 
-  // 批量删除照片
   async deleteMany(photoIds: string[]) {
     const results = await Promise.all(
       photoIds.map(id => this.delete(id))
@@ -257,108 +238,94 @@ export const photos = {
     return { success: !results.some(r => r.error), deleted: results.length }
   },
 
-  // 点赞/取消点赞
   async toggleLike(photoId: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}/like`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
-  // 获取点赞列表
   async getLikes(photoId: string) {
-    const res = await fetch(`${API_BASE}/photos/${photoId}/likes`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/photos/${photoId}/likes`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 }
 
-// 好友 API
 export const friends = {
-  // 搜索用户
   async search(query: string) {
-    const res = await fetch(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/users/search?q=${encodeURIComponent(query)}`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
-  // 添加好友
   async add(friendId: string) {
     const res = await fetch(`${API_BASE}/friends/${friendId}`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
-  // 获取好友列表
   async getAll() {
-    const res = await fetch(`${API_BASE}/friends`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/friends`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
-  // 响应好友请求
   async respond(friendId: string, accept: boolean) {
     const res = await fetch(`${API_BASE}/friends/${friendId}/respond`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ accept }),
     })
     return handleResponse(res)
   },
 
-  // 删除好友
   async remove(friendId: string) {
     const res = await fetch(`${API_BASE}/friends/${friendId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 }
 
-// 通知 API
 export const notifications = {
-  // 获取通知列表
   async getAll() {
-    const res = await fetch(`${API_BASE}/notifications`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+    const res = await fetch(addCacheBuster(`${API_BASE}/notifications`), {
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 
-  // 标记为已读
   async markRead(notifId: string) {
     const res = await fetch(`${API_BASE}/notifications/${notifId}/read`, {
       method: 'PUT',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders(),
     })
     return handleResponse(res)
   },
 }
 
-// 举报 API
 export const reports = {
-  // 举报照片
   async reportPhoto(photoId: string, reason: string) {
     const res = await fetch(`${API_BASE}/photos/${photoId}/report`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ reason }),
     })
     return handleResponse(res)
   },
 
-  // 举报用户
   async reportUser(userId: string, reason: string) {
     const res = await fetch(`${API_BASE}/users/${userId}/report`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ reason }),
     })
     return handleResponse(res)
