@@ -7,6 +7,7 @@ const API_BASE = 'https://family-wall-backend.vercel.app/api'
 const handleResponse = async (res: Response) => {
   try {
     const data = await res.json()
+    console.log('API Response:', data) // 添加日志
     if (data.success === false) {
       return { error: data.error, ...data }
     }

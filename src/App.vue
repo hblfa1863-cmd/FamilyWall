@@ -550,6 +550,7 @@ onMounted(async () => {
       
       <ProfileModal 
         v-if="showProfileModal" 
+        :key="locale"
         :current-locale="locale"
         @close="showProfileModal = false"
         @update-user="(data) => { user = { ...user, ...data } }"
@@ -558,6 +559,7 @@ onMounted(async () => {
       
       <SettingsModal 
         v-if="showSettingsModal" 
+        :key="'settings-' + locale"
         :locale="locale"
         @close="showSettingsModal = false"
         @logout="logout"
