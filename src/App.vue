@@ -64,9 +64,19 @@ const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(nul
 
 // 加载相册照片
 async function loadAlbumPhotos(albumId: string, albumName: string) {
-  const allPhotos = await photos.getByFamily(currentFamilyId.value)
-  const filtered = allPhotos.filter((p: any) => p.albumId === albumId)
-  viewingAlbum.value = { id: albumId, name: albumName, photos: filtered }
+  try {
+    const allPhotos = await photos.getByFamily(currentFamilyId.value)
+    if (!allPhotos || !Array.isArray(allPhotos)) {
+      console.warn('No photos returned or invalid response')
+      viewingAlbum.value = { id: albumId, name: albumName, photos: [] }
+      return
+    }
+    const filtered = allPhotos.filter((p: any) => p.albumId === albumId)
+    viewingAlbum.value = { id: albumId, name: albumName, photos: filtered }
+  } catch (e) {
+    console.error('Failed to load album photos:', e)
+    viewingAlbum.value = { id: albumId, name: albumName, photos: [] }
+  }
 }
 
 // 关闭相册详情

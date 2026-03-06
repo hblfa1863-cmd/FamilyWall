@@ -5,11 +5,16 @@ const API_BASE = 'https://family-wall-backend.vercel.app/api'
 
 // 辅助函数：统一处理响应，兼容成功和失败格式
 const handleResponse = async (res: Response) => {
-  const data = await res.json()
-  if (data.success === false) {
-    return { error: data.error, ...data }
+  try {
+    const data = await res.json()
+    if (data.success === false) {
+      return { error: data.error, ...data }
+    }
+    return data.data || data
+  } catch (e) {
+    console.error('API response parse error:', e)
+    return { error: '响应解析失败' }
   }
-  return data.data
 }
 
 // 获取带缓存控制的headers - 所有API调用必须使用这个函数
