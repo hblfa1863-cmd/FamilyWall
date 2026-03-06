@@ -7,14 +7,16 @@ const API_BASE = 'https://family-wall-backend.vercel.app/api'
 const handleResponse = async (res: Response) => {
   try {
     const data = await res.json()
-    console.log('API Response:', data) // 添加日志
+    console.log('API Response:', data)
+    // 处理不同的响应格式
     if (data.success === false) {
-      return { error: data.error, ...data }
+      return { error: data.error || '操作失败', ...data }
     }
-    return data.data || data
+    // 直接返回 data，兼容 {success, data} 和直接返回数据的情况
+    return data.data !== undefined ? data.data : data
   } catch (e) {
     console.error('API response parse error:', e)
-    return { error: '响应解析失败' }
+    return { error: '网络错误，请稍后重试' }
   }
 }
 

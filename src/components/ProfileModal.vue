@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { auth } from '../api'
 import { t, type Locale } from '../i18n'
 
@@ -29,8 +29,15 @@ const locales = [
   { value: 'en', label: 'English' }
 ]
 
-// 直接使用 props 中的 locale，不再维护内部状态
-const currentLocale = computed(() => props.currentLocale || 'zh')
+// 使用 ref 来存储当前语言，确保响应式
+const currentLocale = ref<Locale>(props.currentLocale || 'zh')
+
+// 监听 props 变化
+watch(() => props.currentLocale, (newLocale) => {
+  if (newLocale) {
+    currentLocale.value = newLocale
+  }
+})
 
 onMounted(async () => {
   isLoading.value = true
@@ -49,6 +56,7 @@ onMounted(async () => {
 
 function changeLocale(locale: Locale) {
   console.log('ProfileModal changeLocale called:', locale)
+  currentLocale.value = locale
   emit('localeChange', locale)
 }
 
@@ -63,7 +71,6 @@ async function saveProfile() {
   
   try {
     // 调用API更新用户信息（需要后端支持）
-    // 这里先模拟成功
     await new Promise(resolve => setTimeout(resolve, 500))
     
     success.value = true

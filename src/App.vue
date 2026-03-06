@@ -68,14 +68,25 @@ const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(nul
 
 // 加载相册照片
 async function loadAlbumPhotos(albumId: string, albumName: string) {
+  console.log('Loading album photos:', albumId, albumName)
   try {
+    if (!currentFamilyId.value) {
+      console.warn('No family selected')
+      viewingAlbum.value = { id: albumId, name: albumName, photos: [] }
+      return
+    }
+    
     const allPhotos = await photos.getByFamily(currentFamilyId.value)
+    console.log('Photos loaded:', allPhotos)
+    
     if (!allPhotos || !Array.isArray(allPhotos)) {
       console.warn('No photos returned or invalid response')
       viewingAlbum.value = { id: albumId, name: albumName, photos: [] }
       return
     }
+    
     const filtered = allPhotos.filter((p: any) => p.albumId === albumId)
+    console.log('Filtered photos for album:', filtered.length)
     viewingAlbum.value = { id: albumId, name: albumName, photos: filtered }
   } catch (e) {
     console.error('Failed to load album photos:', e)
@@ -131,14 +142,25 @@ async function handleRegister(username: string, email: string, password: string,
   try {
     const result = await auth.register(username, email, password, inviteCode)
     console.log('Register result:', result)
-    if (result?.user) {
+    
+    // 更加健壮的判断逻辑
+    if (result && (result.user || result.id || result.token)) {
       console.log('Registration successful, setting user and navigating to wall')
-      user.value = result.user
+      // 保存用户信息
+      if (result.user) {
+        user.value = result.user
+      } else if (result.id) {
+        // 如果返回的是用户ID，创建一个基本用户对象
+        user.value = { id: result.id, username, email }
+      }
+      localStorage.setItem('user', JSON.stringify(user.value))
       await loadFamilies()
       view.value = 'wall'
     } else {
-      console.log('Registration failed, result:', result)
-      alert(result?.error || '注册失败，请稍后重试')
+      // 注册失败，显示错误信息
+      const errorMsg = result?.error || '注册失败，请稍后重试'
+      console.log('Registration failed:', errorMsg)
+      alert(errorMsg)
     }
   } catch (e: any) {
     console.error('Register error:', e)
