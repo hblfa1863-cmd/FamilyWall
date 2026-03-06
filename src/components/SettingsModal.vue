@@ -3,8 +3,8 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
 
-// Build_52 - 确认组件被加载
-console.log('SettingsModal loaded - Build_52')
+// Build_53 - 确认组件被加载，添加调试日志
+console.log('SettingsModal loaded - Build_53')
 
 const props = defineProps<{
   locale?: Locale
@@ -48,6 +48,7 @@ const languages = [
 ]
 
 function selectLanguage(newLocale: Locale) {
+  console.log('SettingsModal selectLanguage called:', newLocale)
   emit('localeChange', newLocale)
 }
 
@@ -164,6 +165,7 @@ async function addTestData() {
     let successCount = 0
     for (let i = 0; i < months.length; i++) {
       const month = months[i]
+      console.log(`Creating photo ${i+1}/${months.length}: ${month.name}`)
       const photoData = {
         urls: [sampleImages[i]],
         type: 'image',
@@ -182,11 +184,12 @@ async function addTestData() {
           body: JSON.stringify(photoData)
         })
         const photoResult = await photoRes.json()
+        console.log('Photo created:', photoResult)
         if (photoResult.success !== false) {
           successCount++
         }
-        // 添加延迟确保后端创建不同的时间戳
-        await new Promise(resolve => setTimeout(resolve, 500))
+        // 添加更长的延迟确保后端创建不同的时间戳
+        await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (e) {
         console.error('Error creating photo:', e)
       }

@@ -35,7 +35,9 @@ provide('t', (key: string) => t(key, locale.value))
 
 // 更新语言
 function setLocale(newLocale: Locale) {
+  console.log('setLocale called:', newLocale)
   locale.value = newLocale
+  console.log('locale updated to:', locale.value)
 }
 
 // State
@@ -125,13 +127,17 @@ async function handleLogin(email: string, password: string) {
 }
 
 async function handleRegister(username: string, email: string, password: string, inviteCode?: string) {
+  console.log('handleRegister called:', { username, email, inviteCode })
   try {
     const result = await auth.register(username, email, password, inviteCode)
+    console.log('Register result:', result)
     if (result?.user) {
+      console.log('Registration successful, setting user and navigating to wall')
       user.value = result.user
       await loadFamilies()
       view.value = 'wall'
     } else {
+      console.log('Registration failed, result:', result)
       alert(result?.error || '注册失败，请稍后重试')
     }
   } catch (e: any) {

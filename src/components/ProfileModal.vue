@@ -48,6 +48,7 @@ onMounted(async () => {
 })
 
 function changeLocale(locale: Locale) {
+  console.log('ProfileModal changeLocale called:', locale)
   emit('localeChange', locale)
 }
 
