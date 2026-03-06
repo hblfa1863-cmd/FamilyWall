@@ -3,8 +3,8 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
 
-// Build_51 - 确认组件被加载
-console.log('SettingsModal loaded - Build_51')
+// Build_52 - 确认组件被加载
+console.log('SettingsModal loaded - Build_52')
 
 const props = defineProps<{
   locale?: Locale
