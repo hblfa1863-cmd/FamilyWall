@@ -29,7 +29,8 @@ const locales = [
   { value: 'en', label: 'English' }
 ]
 
-const currentLocale = ref<Locale>(props.currentLocale || 'zh')
+// 直接使用 props 中的 locale，不再维护内部状态
+const currentLocale = computed(() => props.currentLocale || 'zh')
 
 onMounted(async () => {
   isLoading.value = true
@@ -47,7 +48,6 @@ onMounted(async () => {
 })
 
 function changeLocale(locale: Locale) {
-  currentLocale.value = locale
   emit('localeChange', locale)
 }
 

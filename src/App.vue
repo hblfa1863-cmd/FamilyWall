@@ -123,13 +123,18 @@ async function handleLogin(email: string, password: string) {
 }
 
 async function handleRegister(username: string, email: string, password: string, inviteCode?: string) {
-  const result = await auth.register(username, email, password, inviteCode)
-  if (result?.user) {
-    user.value = result.user
-    await loadFamilies()
-    view.value = 'wall'
-  } else {
-    alert(result?.error || '注册失败')
+  try {
+    const result = await auth.register(username, email, password, inviteCode)
+    if (result?.user) {
+      user.value = result.user
+      await loadFamilies()
+      view.value = 'wall'
+    } else {
+      alert(result?.error || '注册失败，请稍后重试')
+    }
+  } catch (e: any) {
+    console.error('Register error:', e)
+    alert(e?.message || '注册失败，请稍后重试')
   }
 }
 
@@ -411,7 +416,8 @@ onMounted(async () => {
           :can-create-album="canCreateAlbum" 
           @create-album="showAlbumModal = true" 
           @delete-album="deleteAlbum"
-          @open-album="loadAlbumPhotos($event.id, $event.name)"
+          @open-album="(album) => loadAlbumPhotos(album.id, album.name)"
+          @openAlbum="(album) => loadAlbumPhotos(album.id, album.name)"
         />
         
         <!-- Album Detail View -->

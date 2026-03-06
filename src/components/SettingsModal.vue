@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
 
-// Build_42 - 确认组件被加载
-console.log('SettingsModal loaded - Build_42')
+// Build_43 - 确认组件被加载
+console.log('SettingsModal loaded - Build_43')
 
 const props = defineProps<{
   locale?: Locale
@@ -17,15 +17,8 @@ const emit = defineEmits<{
   reloadPhotos: []
 }>()
 
-// 使用props中的locale
-const locale = ref<Locale>(props.locale || 'zh')
-
-// 监听props变化
-watch(() => props.locale, (newVal) => {
-  if (newVal) {
-    locale.value = newVal
-  }
-})
+// 使用props中的locale，使用computed确保响应式
+const locale = computed(() => props.locale || 'zh')
 
 // 开发者模式
 const isDevMode = ref(false)
@@ -55,7 +48,6 @@ const languages = [
 ]
 
 function selectLanguage(newLocale: Locale) {
-  locale.value = newLocale
   emit('localeChange', newLocale)
 }
 
@@ -177,9 +169,7 @@ async function addTestData() {
         type: 'image',
         title: titles[i],
         description: `${month.name}的美好回忆`,
-        albumId: albumId,
-        // 尝试设置特定日期
-        createdAt: new Date(month.date).toISOString()
+        albumId: albumId
       }
       
       try {
@@ -195,6 +185,8 @@ async function addTestData() {
         if (photoResult.success !== false) {
           successCount++
         }
+        // 添加延迟确保后端创建不同的时间戳
+        await new Promise(resolve => setTimeout(resolve, 500))
       } catch (e) {
         console.error('Error creating photo:', e)
       }
@@ -339,7 +331,7 @@ async function addTestData() {
         
         <!-- Version Info -->
         <div class="text-center pt-4 pb-2">
-          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_41</button>
+          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_43</button>
         </div>
         
         <!-- Developer Mode Section -->
