@@ -1,4 +1,6 @@
 <script setup lang="ts">
+// UNIQUE_APP_MARKER_48
+console.log('App.vue loaded - UNIQUE_APP_MARKER_48')
 import { ref, computed, onMounted, provide } from 'vue'
 import { auth, families, albums, photos } from './api'
 import { t, type Locale, messages } from './i18n'
