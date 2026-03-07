@@ -3,8 +3,8 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { t, type Locale } from '../i18n'
 import { photos, albums } from '../api'
 
-// Build_55 - 修复所有问题
-console.log('SettingsModal loaded - Build_55')
+// Build_56 - 部署更新
+console.log('SettingsModal loaded - Build_56')
 
 const props = defineProps<{
   locale?: Locale
@@ -341,7 +341,7 @@ async function addTestData() {
         
         <!-- Version Info -->
         <div class="text-center pt-4 pb-2">
-          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_43</button>
+          <button @click="handleVersionClick" class="text-xs text-gray-400 hover:text-gray-500">PhotoWall Build_56</button>
         </div>
         
         <!-- Developer Mode Section -->
