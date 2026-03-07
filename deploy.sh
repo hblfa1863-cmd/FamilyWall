@@ -21,7 +21,7 @@ cp dist/index.html .
 
 # 4. 检查 index.html 引用的 JS 文件是否存在于 assets 目录
 echo "✅ 验证文件..."
-JS_FILE=$(grep -oP 'src="\K[^"]+' index.html | head -1)
+JS_FILE=$(grep -oP 'src="\K[^"]+' index.html | head -1 | sed 's|^./||')
 if [ -f "assets/$JS_FILE" ]; then
     echo "✓ JS 文件 $JS_FILE 存在"
 else
