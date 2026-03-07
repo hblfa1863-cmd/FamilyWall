@@ -15,6 +15,16 @@ export interface Family {
   role?: 'admin' | 'maintainer' | 'member'
   inviteCode?: string
   createdAt?: string
+  members?: FamilyMember[]
+}
+
+export interface FamilyMember {
+  id: string
+  userId: string
+  username: string
+  email: string
+  role: 'admin' | 'maintainer' | 'member'
+  joinedAt?: string
 }
 
 export interface Album {
@@ -27,6 +37,7 @@ export interface Album {
   createdBy: string
   createdAt: string
   updatedAt: string
+  photoCount?: number
 }
 
 export interface Photo {
@@ -34,6 +45,7 @@ export interface Photo {
   familyId: string
   albumId?: string
   urls: string[]
+  url?: string
   type: 'image' | 'video'
   title?: string
   description?: string
@@ -41,12 +53,14 @@ export interface Photo {
   createdAt: string
   likeCount?: number
   commentCount?: number
+  comments?: Comment[]
 }
 
 export interface Comment {
   id: string
   photoId: string
   author: string
+  authorId?: string
   text: string
   createdAt: string
 }
@@ -64,7 +78,7 @@ export interface Friend {
   username: string
   email: string
   status: 'pending' | 'accepted'
-  createdAt: string
+  createdAt?: string
 }
 
 export interface Notification {
@@ -74,6 +88,7 @@ export interface Notification {
   fromUsername?: string
   toUserId: string
   photoId?: string
+  familyId?: string
   read: boolean
   createdAt: string
 }
@@ -83,4 +98,44 @@ export interface ApiResponse<T = any> {
   data?: T
   error?: string
   message?: string
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+// API 请求类型
+export interface CreateAlbumRequest {
+  name: string
+  description?: string
+  privacy?: 'public' | 'private' | 'protected'
+  cover?: string
+}
+
+export interface UpdateAlbumRequest {
+  name?: string
+  description?: string
+  privacy?: 'public' | 'private' | 'protected'
+  cover?: string
+}
+
+export interface UploadPhotoRequest {
+  urls: string[]
+  type?: 'image' | 'video'
+  title?: string
+  description?: string
+  albumId: string
+}
+
+export interface CreateFamilyRequest {
+  name: string
+  description?: string
+}
+
+export interface InviteCodeResponse {
+  code: string
+  expiresAt?: string
 }

@@ -5,6 +5,9 @@ import { ref, computed, onMounted, provide } from 'vue'
 import { auth, families, albums, photos } from './api'
 import { t, type Locale, messages } from './i18n'
 
+// Stores
+import { useAuthStore, useFamilyStore, useAlbumStore, usePhotoStore, useNotificationStore, useUIStore, useFriendStore } from './stores'
+
 // Components
 import LoginView from './views/LoginView.vue'
 import RegisterView from './views/RegisterView.vue'
@@ -33,38 +36,31 @@ const locale = ref<Locale>('zh')
 provide('locale', locale)
 provide('t', (key: string) => t(key, locale.value))
 
+// Initialize stores
+const authStore = useAuthStore()
+const familyStore = useFamilyStore()
+const albumStore = useAlbumStore()
+const photoStore = usePhotoStore()
+const notificationStore = useNotificationStore()
+const friendStore = useFriendStore()
+const uiStore = useUIStore()
+
+// Use stores for UI state
+const { view, showUploadModal, showAlbumModal, showCreateFamilyModal, showInviteModal, showFriendsList, showNotifications, showShareModal, showSecuritySettings, showProfileModal, showSettingsModal, preselectedAlbumId, viewingAlbum, newlyCreatedFamily, locale, inviteCode } = uiStore
+
+// Use stores for data
+const { families: familiesList, currentFamilyId, currentFamily } = familyStore
+const { albums: albumsList } = albumStore
+const { photos: photosList, selectedPhoto } = photoStore
+const { user } = authStore
+const { unreadCount } = notificationStore
+
 // 更新语言
 function setLocale(newLocale: Locale) {
   console.log('setLocale called:', newLocale)
   locale.value = newLocale
   console.log('locale updated to:', locale.value)
 }
-
-// State
-const user = ref<{ id: string; username: string; email: string } | null>(null)
-const familiesList = ref<any[]>([])
-const currentFamilyId = ref('')
-const albumsList = ref<any[]>([])
-const photosList = ref<any[]>([])
-const selectedPhoto = ref<any | null>(null)
-const view = ref<'wall' | 'timeline' | 'albums' | 'login' | 'register'>('login')
-const showUploadModal = ref(false)
-const showAlbumModal = ref(false)
-const showCreateFamilyModal = ref(false)
-const showInviteModal = ref(false)
-const newInviteCode = ref('')
-const showFriendsList = ref(false)
-const showNotifications = ref(false)
-const showShareModal = ref(false)
-const showSecuritySettings = ref(false)
-const showProfileModal = ref(false)
-const showSettingsModal = ref(false)
-
-// 上传模态框预选的相册ID
-const preselectedAlbumId = ref<string | undefined>(undefined)
-
-// 相册详情
-const viewingAlbum = ref<{ id: string; name: string; photos: any[] } | null>(null)
 
 // 加载相册照片
 async function loadAlbumPhotos(albumId: string, albumName: string) {
@@ -76,7 +72,7 @@ async function loadAlbumPhotos(albumId: string, albumName: string) {
       return
     }
     
-    const allPhotos = await photos.getByFamily(currentFamilyId.value)
+    const allPhotos = await photoStore.fetchPhotos(currentFamilyId.value)(currentFamilyId.value)
     console.log('Photos loaded:', allPhotos)
     
     if (!allPhotos || !Array.isArray(allPhotos)) {
@@ -102,7 +98,7 @@ function closeAlbumDetail() {
 // 打开上传模态框（可选预选相册ID）
 function openUploadModal(albumId?: string) {
   preselectedAlbumId.value = albumId
-  showUploadModal.value = true
+  uiStore.openUploadModal()
 }
 
 // 通知未读数
@@ -127,11 +123,11 @@ const needsFamilyGuide = computed(() => familiesList.value.length === 0 && curre
 
 // Auth
 async function handleLogin(email: string, password: string) {
-  const result = await auth.login(email, password)
+  const result = await authStore.login(email, password)
   if (result?.user) {
-    user.value = result.user
-    await loadFamilies()
-    view.value = 'wall'
+    user = result.user
+    await familyStore.fetchFamilies()
+    uiStore.setView('wall')
   } else {
     alert(result?.error || '登录失败')
   }
@@ -140,7 +136,7 @@ async function handleLogin(email: string, password: string) {
 async function handleRegister(username: string, email: string, password: string, inviteCode?: string) {
   console.log('handleRegister called:', { username, email, inviteCode })
   try {
-    const result = await auth.register(username, email, password, inviteCode)
+    const result = await authStore.register(username, email, password, inviteCode)
     console.log('Register result:', result)
     
     // 更加健壮的判断逻辑
@@ -148,14 +144,14 @@ async function handleRegister(username: string, email: string, password: string,
       console.log('Registration successful, setting user and navigating to wall')
       // 保存用户信息
       if (result.user) {
-        user.value = result.user
+        user = result.user
       } else if (result.id) {
         // 如果返回的是用户ID，创建一个基本用户对象
-        user.value = { id: result.id, username, email }
+        user = { id: result.id, username, email }
       }
-      localStorage.setItem('user', JSON.stringify(user.value))
-      await loadFamilies()
-      view.value = 'wall'
+      user = result.user || { id: result.id, username, email }
+      await familyStore.fetchFamilies()
+      uiStore.setView('wall')
     } else {
       // 注册失败，显示错误信息
       const errorMsg = result?.error || '注册失败，请稍后重试'
@@ -169,48 +165,48 @@ async function handleRegister(username: string, email: string, password: string,
 }
 
 function logout() {
-  auth.logout()
-  user.value = null
-  familiesList.value = []
-  currentFamilyId.value = ''
-  view.value = 'login'
+  authStore.logout()
+  user = null
+  familiesList = []
+  familyStore.switchFamily('')
+  uiStore.setView('login')
 }
 
 // Data
 async function loadFamilies() {
-  familiesList.value = await families.getAll()
+  familiesList = await familyStore.fetchFamilies()
   if (familiesList.value.length > 0 && !currentFamilyId.value) {
-    currentFamilyId.value = familiesList.value[0].id
+    familyStore.switchFamily(familiesList.value[0].id)
     await Promise.all([loadAlbums(), loadPhotos()])
   }
 }
 
 async function loadAlbums() {
   if (!currentFamilyId.value) return
-  albumsList.value = await albums.getByFamily(currentFamilyId.value)
+  albumsList = await albumStore.fetchAlbums(currentFamilyId.value)
 }
 
 async function loadPhotos() {
   if (!currentFamilyId.value) return
-  photosList.value = await photos.getByFamily(currentFamilyId.value)
-  await loadPhotoLikes()
+  photosList = await photoStore.fetchPhotos(currentFamilyId.value)
+  await photoStore.loadPhotoLikes()
 }
 
 // Actions
 // 显示新建家族弹窗
 function showCreateFamily() {
-  showCreateFamilyModal.value = true
+  uiStore.openCreateFamilyModal()
 }
 
 // 创建家族
 async function handleCreateFamily(data: { name: string; description: string; createAlbum: boolean; albumName: string }) {
-  const result = await families.create(data.name, data.description)
+  const result = await familyStore.createFamily(data.name, data.description)
   if (result.id) {
-    await loadFamilies()
+    await familyStore.fetchFamilies()
     
     // 如果需要同时创建相册
     if (data.createAlbum && data.albumName) {
-      await albums.create(result.id, { name: data.albumName })
+      await albumStore.createAlbum(result.id, { name: data.albumName })
       await loadAlbums()
     }
     
@@ -218,7 +214,7 @@ async function handleCreateFamily(data: { name: string; description: string; cre
     currentFamilyId.value = result.id
     await loadPhotos()
     
-    showCreateFamilyModal.value = false
+    uiStore.closeCreateFamilyModal()
     
     // 显示成功提示和上传入口
     newlyCreatedFamily.value = { id: result.id, name: data.name, showUpload: true }
@@ -240,38 +236,38 @@ async function switchFamily(familyId: string) {
 }
 
 async function showInviteCode() {
-  const result = await families.getInviteCode(currentFamilyId.value)
+  const result = await familyStore.fetchInviteCode(currentFamilyId.value)
   newInviteCode.value = result.inviteCode || ''
-  showInviteModal.value = true
+  uiStore.openInviteModal('')
 }
 
 async function createAlbum(data: { name: string; description: string; privacy: string; cover: string }) {
-  const result = await albums.create(currentFamilyId.value, data)
+  const result = await albumStore.createAlbum(currentFamilyId.value, data)
   if (result.id) {
     await loadAlbums()
-    showAlbumModal.value = false
+    uiStore.closeAlbumModal()
   }
 }
 
 async function deleteAlbum(albumId: string) {
   if (!confirm('确定要删除这个相册吗？')) return
-  const result = await albums.delete(albumId)
+  const result = await albumStore.deleteAlbum(albumId)
   if (!result.error) {
     await loadAlbums()
   }
 }
 
 async function uploadPhoto(data: { urls: string[]; type?: string; title?: string; description?: string; albumId?: string }) {
-  const result = await photos.upload(currentFamilyId.value, data)
+  const result = await photoStore.uploadPhoto(currentFamilyId.value, data)
   if (!result.error) {
     await loadPhotos()
-    showUploadModal.value = false
+    uiStore.closeUploadModal()
   }
 }
 
 async function addComment(photoId: string, content: string) {
-  await photos.addComment(photoId, content)
-  const updated = await photos.getById(photoId)
+  await photoStore.addComment(photoId, content)
+  const updated = await photoStore.getPhotoById(photoId)
   if (updated.id) {
     const idx = photosList.value.findIndex(p => p.id === photoId)
     if (idx >= 0) photosList.value[idx] = updated
@@ -281,7 +277,7 @@ async function addComment(photoId: string, content: string) {
 
 // 批量删除照片
 async function deletePhotos(photoIds: string[]) {
-  const result = await photos.deleteMany(photoIds)
+  const result = await photoStore.deletePhotoMany(photoIds)
   if (result.success) {
     await loadPhotos()
   } else {
@@ -296,7 +292,7 @@ const photoLikes = ref<Record<string, { liked: boolean; count: number }>>({})
 async function loadPhotoLikes() {
   const likes: Record<string, { liked: boolean; count: number }> = {}
   for (const photo of photosList.value) {
-    const result = await photos.getLikes(photo.id)
+    const result = await photoStore.getLikes(photo.id)
     if (result && !result.error) {
       likes[photo.id] = {
         liked: result.some((l: any) => l.userId === user.value?.id),
@@ -322,19 +318,19 @@ function handleLikeChange(photoId: string, liked: boolean, count: number) {
 // 加载通知未读数
 async function loadUnreadCount() {
   const { notifications } = await import('./api')
-  const list = await notifications.getAll()
+  const list = await notificationStore.fetchNotifications()
   unreadCount.value = list?.filter((n: any) => !n.read).length || 0
 }
 
 // Initialize
 onMounted(async () => {
-  if (auth.isLoggedIn()) {
-    const me = await auth.getMe()
+  if (authStore.isLoggedIn()) {
+    const me = await authStore.fetchUser()
     if (me.id) {
       user.value = me
-      await loadFamilies()
+      await familyStore.fetchFamilies()
       await loadUnreadCount()
-      view.value = 'wall'
+      uiStore.setView('wall')
     }
   }
 })
