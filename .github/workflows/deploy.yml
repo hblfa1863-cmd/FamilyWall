@@ -7,19 +7,17 @@ on:
 
 permissions:
   contents: write
-  pages: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pages: write
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -31,6 +29,15 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Show build output
+        run: |
+          echo "=== Build output ==="
+          ls -la dist/
+          echo "=== JS files ==="
+          ls -la dist/assets/
+          echo "=== HTML ==="
+          cat dist/index.html
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
