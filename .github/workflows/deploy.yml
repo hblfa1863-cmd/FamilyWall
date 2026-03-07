@@ -27,19 +27,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'no-cache'
+
       - name: Install dependencies
-        run: npm ci --force
+        run: npm ci
+
       - name: Build
         run: npm run build
+
       - name: Show build info
         run: |
           echo "=== Build Output ==="
           ls -la dist/
           echo "=== JS Files ==="
           ls -la dist/assets/*.js
-          echo "=== HTML ==="
-          cat dist/index.html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
