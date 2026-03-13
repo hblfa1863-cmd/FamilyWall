@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const apiUrl = ref('')
 const error = ref('')
 const loading = ref(false)
@@ -31,20 +33,11 @@ async function saveApiUrl() {
   
   loading.value = true
   
-  // 使用 AbortController 添加超时
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 10000)
-  
   try {
-    const testUrl = url + '/health'
-    const res = await fetch(testUrl, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json'
-      }
-    })
-    clearTimeout(timeoutId)
+    const testUrl = url.replace('/api', '') + '/api/health'
+    console.log('测试URL:', testUrl)
+    
+    const res = await fetch(testUrl)
     
     if (!res.ok) {
       throw new Error('连接失败，状态码: ' + res.status)
@@ -52,30 +45,26 @@ async function saveApiUrl() {
     
     const data = await res.json()
     if (data.status !== 'ok') {
-      throw new Error('API 响应异常: ' + JSON.stringify(data))
+      throw new Error('API 响应异常')
     }
     
     // 保存到 localStorage
     localStorage.setItem('api_url', url)
     localStorage.removeItem('token')
+    console.log('API地址已保存:', url)
     
-    // 跳转
-    window.location.href = '/login'
-    return
+    // 使用 router 跳转
+    router.push('/login')
     
   } catch (e: unknown) {
-    clearTimeout(timeoutId)
-    if (e.name === 'AbortError') {
-      error.value = '连接超时，请检查 API 地址是否正确'
-    } else {
-      error.value = '连接失败: ' + (e.message || '请检查 API 地址')
-    }
+    console.error('连接失败:', e)
+    error.value = '连接失败: 请检查 API 地址是否正确'
     loading.value = false
   }
 }
 
 function skipSetup() {
-  window.location.href = '/login'
+  router.push('/login')
 }
 </script>
 
