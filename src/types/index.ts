@@ -199,3 +199,65 @@ export interface TimelineItem {
   date: string;
   notes: NoteWithAuthor[];
 }
+
+// ==================== 响应类型 ====================
+
+export interface ApiError {
+  success: false;
+  message: string;
+  errors?: Record<string, string[]>;
+}
+
+export interface ApiSuccess<T> {
+  success: true;
+  message?: string;
+  data: T;
+}
+
+export type ApiResult<T> = ApiSuccess<T> | ApiError;
+
+// ==================== 请求类型 ====================
+
+export interface LoginRequest {
+  email: string;
+  password?: string;
+  code?: string;
+}
+
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  code: string;
+  nickname: string;
+}
+
+export interface CreateNoteRequest {
+  title: string;
+  content: string;
+  family_id: number;
+  visibility?: 'family' | 'clan' | 'public';
+  location_name?: string;
+  location_lat?: number;
+  location_lng?: number;
+  images?: string[];
+  videos?: string[];
+}
+
+export interface UpdateNoteRequest extends Partial<CreateNoteRequest> {
+  id: number;
+}
+
+export interface CreateFamilyRequest {
+  name: string;
+  avatar?: string;
+}
+
+export interface CreateClanRequest {
+  name: string;
+  bio?: string;
+  avatar?: string;
+}
+
+export interface JoinFamilyRequest {
+  code: string;
+}
