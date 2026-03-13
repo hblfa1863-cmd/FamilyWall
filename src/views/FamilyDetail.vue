@@ -135,7 +135,7 @@ const fetchNotes = async () => {
   try {
     const res = await api.getNotes(familyId);
     if (res.success && res.data) {
-      notes.value = res.data.data.map((note: any) => ({
+      notes.value = res.data.data.map((note: unknown) => ({
         id: note.id,
         cover: note.cover || note.media?.[0]?.url,
       }));
@@ -150,7 +150,7 @@ const fetchMembers = async () => {
   try {
     const res = await api.getFamilyMembers(familyId);
     if (res.success && res.data) {
-      members.value = res.data.map((m: any) => ({
+      members.value = res.data.map((m: unknown) => ({
         id: m.id,
         nickname: m.user?.nickname || '未知',
         avatar: m.user?.avatar,

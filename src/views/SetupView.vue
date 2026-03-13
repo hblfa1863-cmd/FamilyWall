@@ -63,7 +63,7 @@ async function saveApiUrl() {
     window.location.href = '/login'
     return
     
-  } catch (e: any) {
+  } catch (e: unknown) {
     clearTimeout(timeoutId)
     if (e.name === 'AbortError') {
       error.value = '连接超时，请检查 API 地址是否正确'

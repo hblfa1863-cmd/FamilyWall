@@ -24,7 +24,7 @@ export const useFamilyStore = defineStore('family', () => {
         families.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取家庭列表失败';
       throw e;
     } finally {
@@ -41,7 +41,7 @@ export const useFamilyStore = defineStore('family', () => {
         families.value.unshift(res.data);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '创建家庭失败';
       throw e;
     } finally {
@@ -58,7 +58,7 @@ export const useFamilyStore = defineStore('family', () => {
         currentFamily.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取家庭详情失败';
       throw e;
     } finally {
@@ -81,7 +81,7 @@ export const useFamilyStore = defineStore('family', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '更新家庭失败';
       throw e;
     } finally {
@@ -101,7 +101,7 @@ export const useFamilyStore = defineStore('family', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '删除家庭失败';
       throw e;
     } finally {
@@ -115,7 +115,7 @@ export const useFamilyStore = defineStore('family', () => {
     try {
       const res = await api.generateInviteCode(familyId);
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '生成邀请码失败';
       throw e;
     } finally {
@@ -132,7 +132,7 @@ export const useFamilyStore = defineStore('family', () => {
         await fetchFamilies(); // 刷新列表
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '加入家庭失败';
       throw e;
     } finally {
@@ -149,7 +149,7 @@ export const useFamilyStore = defineStore('family', () => {
         members.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取成员列表失败';
       throw e;
     } finally {
@@ -166,7 +166,7 @@ export const useFamilyStore = defineStore('family', () => {
         members.value = members.value.filter(m => m.user_id !== userId);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '移除成员失败';
       throw e;
     } finally {

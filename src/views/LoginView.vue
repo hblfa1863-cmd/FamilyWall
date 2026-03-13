@@ -205,7 +205,7 @@ const handleLogin = async () => {
       errorMessage.value = res.message || '登录失败';
       showError.value = true;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorMessage.value = error.message || '登录失败，请重试';
     showError.value = true;
   } finally {

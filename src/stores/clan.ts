@@ -28,7 +28,7 @@ export const useClanStore = defineStore('clan', () => {
         myClans.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取我的家族失败';
       throw e;
     } finally {
@@ -50,7 +50,7 @@ export const useClanStore = defineStore('clan', () => {
         pagination.value = res.data.pagination;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取家族广场失败';
       throw e;
     } finally {
@@ -67,7 +67,7 @@ export const useClanStore = defineStore('clan', () => {
         myClans.value.unshift(res.data);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '创建家族失败';
       throw e;
     } finally {
@@ -84,7 +84,7 @@ export const useClanStore = defineStore('clan', () => {
         currentClan.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取家族详情失败';
       throw e;
     } finally {
@@ -107,7 +107,7 @@ export const useClanStore = defineStore('clan', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '更新家族失败';
       throw e;
     } finally {
@@ -127,7 +127,7 @@ export const useClanStore = defineStore('clan', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '删除家族失败';
       throw e;
     } finally {
@@ -141,7 +141,7 @@ export const useClanStore = defineStore('clan', () => {
     try {
       const res = await api.applyJoinClan(clanId, familyId);
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '申请加入失败';
       throw e;
     } finally {
@@ -158,7 +158,7 @@ export const useClanStore = defineStore('clan', () => {
         clanFamilies.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取家族家庭列表失败';
       throw e;
     } finally {

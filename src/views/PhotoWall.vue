@@ -120,7 +120,7 @@ import { ref, reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { FwButton, FwAvatar } from '@/components';
 import api from '@/services/api';
-import type { Family, Clan, Note } from '@/types';
+import type { Family, Clan, Note, NoteListItem, FamilyListItem } from '@/types';
 
 const router = useRouter();
 
@@ -163,9 +163,9 @@ const currentFamily = reactive<SimpleFamily>({
   avatar: '',
 });
 
-const myFamilies = ref<SimpleFamily[]>([]);
+const myFamilies = ref<FamilyListItem[]>([]);
 const myClans = ref<SimpleClan[]>([]);
-const notes = ref<SimpleNote[]>([]);
+const notes = ref<NoteListItem[]>([]);
 
 // 获取家庭列表
 const fetchFamilies = async () => {
@@ -184,7 +184,7 @@ const fetchFamilies = async () => {
         selectFamily(myFamilies.value[0]);
       }
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     error.value = '获取家庭列表失败';
     console.error(e);
   }
@@ -208,7 +208,7 @@ const fetchNotes = async () => {
         },
       }));
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     error.value = '获取笔记失败';
     console.error(e);
   } finally {

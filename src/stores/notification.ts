@@ -34,7 +34,7 @@ export const useNotificationStore = defineStore('notification', () => {
         pagination.value = res.data.pagination;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取通知列表失败';
       throw e;
     } finally {
@@ -49,7 +49,7 @@ export const useNotificationStore = defineStore('notification', () => {
         unreadCount.value = (res as any).unread_count || 0;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('获取未读数量失败', e);
     }
   }
@@ -65,7 +65,7 @@ export const useNotificationStore = defineStore('notification', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '标记已读失败';
       throw e;
     }
@@ -81,7 +81,7 @@ export const useNotificationStore = defineStore('notification', () => {
         unreadCount.value = 0;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '标记全部已读失败';
       throw e;
     } finally {

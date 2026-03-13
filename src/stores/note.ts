@@ -33,7 +33,7 @@ export const useNoteStore = defineStore('note', () => {
         pagination.value = res.data.pagination;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取笔记列表失败';
       throw e;
     } finally {
@@ -60,7 +60,7 @@ export const useNoteStore = defineStore('note', () => {
         notes.value.unshift(res.data);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '创建笔记失败';
       throw e;
     } finally {
@@ -77,7 +77,7 @@ export const useNoteStore = defineStore('note', () => {
         currentNote.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取笔记详情失败';
       throw e;
     } finally {
@@ -100,7 +100,7 @@ export const useNoteStore = defineStore('note', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '更新笔记失败';
       throw e;
     } finally {
@@ -120,7 +120,7 @@ export const useNoteStore = defineStore('note', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '删除笔记失败';
       throw e;
     } finally {
@@ -138,7 +138,7 @@ export const useNoteStore = defineStore('note', () => {
         await fetchNote(noteId);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '评论失败';
       throw e;
     } finally {
@@ -155,7 +155,7 @@ export const useNoteStore = defineStore('note', () => {
         await fetchNote(noteId);
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '删除评论失败';
       throw e;
     } finally {
@@ -179,7 +179,7 @@ export const useNoteStore = defineStore('note', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '操作失败';
       throw e;
     }
@@ -198,7 +198,7 @@ export const useNoteStore = defineStore('note', () => {
         }
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '操作失败';
       throw e;
     }
@@ -218,7 +218,7 @@ export const useNoteStore = defineStore('note', () => {
         pagination.value = res.data.pagination;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取照片墙失败';
       throw e;
     } finally {
@@ -235,7 +235,7 @@ export const useNoteStore = defineStore('note', () => {
         timeline.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '获取时光轴失败';
       throw e;
     } finally {

@@ -79,7 +79,7 @@ const fetchNotes = async () => {
   try {
     const res = await api.getNotes(undefined, 1);
     if (res.success && res.data) {
-      notes.value = res.data.data.map((note: any) => ({
+      notes.value = res.data.data.map((note: unknown) => ({
         id: note.id,
         cover: note.cover || note.media?.[0]?.url,
       }));
@@ -94,7 +94,7 @@ const fetchFamilies = async () => {
   try {
     const res = await api.getClanFamilies(clanId);
     if (res.success && res.data) {
-      families.value = res.data.map((f: any) => ({
+      families.value = res.data.map((f: unknown) => ({
         id: f.id,
         name: f.name,
         avatar: f.avatar,

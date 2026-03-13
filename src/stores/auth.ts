@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
         return res;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '网络错误';
       throw e;
     } finally {
@@ -45,7 +45,7 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = res.message || '注册失败';
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '网络错误';
       throw e;
     } finally {
@@ -65,7 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = res.message || '登录失败';
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '网络错误';
       throw e;
     } finally {
@@ -95,7 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e.response?.status === 401) {
         user.value = null;
         token.value = null;
@@ -115,7 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = res.data;
       }
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '更新失败';
       throw e;
     } finally {
@@ -129,7 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await api.updatePassword(currentPassword, password);
       return res;
-    } catch (e: any) {
+    } catch (e: unknown) {
       error.value = e.response?.data?.message || '修改密码失败';
       throw e;
     } finally {

@@ -81,7 +81,7 @@ const handleCreate = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1000));
     router.replace('/families');
-  } catch (e: any) {
+  } catch (e: unknown) {
     errorMessage.value = e.message || '创建失败';
     showError.value = true;
   } finally {

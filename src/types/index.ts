@@ -261,3 +261,53 @@ export interface CreateClanRequest {
 export interface JoinFamilyRequest {
   code: string;
 }
+
+// ==================== 错误类型 ====================
+
+export interface ApiException {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+    };
+  };
+  message?: string;
+}
+
+// ==================== 映射类型 ====================
+
+export interface NoteListItem {
+  id: number;
+  title: string;
+  cover?: string;
+  imagesCount?: number;
+  author: {
+    nickname: string;
+    avatar?: string;
+  };
+}
+
+export interface FamilyListItem {
+  id: number;
+  name: string;
+  avatar?: string;
+  memberCount?: number;
+  noteCount?: number;
+}
+
+export interface ClanListItem {
+  id: number;
+  name: string;
+  avatar?: string;
+  bio?: string;
+  familyCount?: number;
+  noteCount?: number;
+}
+
+export interface MemberItem {
+  id: number;
+  nickname: string;
+  avatar?: string;
+  role: 'admin' | 'member';
+  joinedAt: string;
+}

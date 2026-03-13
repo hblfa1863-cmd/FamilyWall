@@ -272,7 +272,7 @@ const handleRegister = async () => {
       errorMessage.value = res.message || '注册失败';
       showError.value = true;
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorMessage.value = error.message || '注册失败，请重试';
     showError.value = true;
   } finally {

@@ -77,7 +77,7 @@ const handleJoin = async () => {
   try {
     await new Promise(resolve => setTimeout(resolve, 1500));
     router.replace('/families');
-  } catch (e: any) {
+  } catch (e: unknown) {
     errorMessage.value = e.message || '邀请码无效或已过期';
     showError.value = true;
   } finally {
