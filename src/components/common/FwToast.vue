@@ -10,6 +10,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 interface Props {
   message: string;
   type?: 'success' | 'error' | 'warning' | 'info';
