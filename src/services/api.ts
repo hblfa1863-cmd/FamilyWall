@@ -1,7 +1,13 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse, AuthResponse, User, UserSettings, Family, Clan, Note, Notification, InviteCode, PaginatedResponse } from '@/types';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// 从 localStorage 获取 API 地址，如果没有则使用默认值
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('api_url') || 'http://localhost:8000/api';
+  }
+  return 'http://localhost:8000/api';
+};
 
 class ApiService {
   private client: AxiosInstance;
@@ -9,7 +15,7 @@ class ApiService {
 
   constructor() {
     this.client = axios.create({
-      baseURL: BASE_URL,
+      baseURL: getBaseUrl(),
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
@@ -22,6 +28,8 @@ class ApiService {
         if (this.token && config.headers) {
           config.headers.Authorization = `Bearer ${this.token}`;
         }
+        // 动态更新 baseURL
+        config.baseURL = getBaseUrl();
         return config;
       },
       (error) => Promise.reject(error)
@@ -56,6 +64,15 @@ class ApiService {
       this.token = localStorage.getItem('token');
     }
     return this.token;
+  }
+
+  // API 地址管理
+  setApiUrl(url: string) {
+    localStorage.setItem('api_url', url);
+  }
+
+  getApiUrl(): string {
+    return localStorage.getItem('api_url') || '';
   }
 
   // ==================== 认证 ====================

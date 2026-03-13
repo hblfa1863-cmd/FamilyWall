@@ -25,6 +25,7 @@ const SettingsView = () => import('@/views/SettingsView.vue');
 const PrivacyView = () => import('@/views/PrivacyView.vue');
 const TermsView = () => import('@/views/TermsView.vue');
 const AboutView = () => import('@/views/AboutView.vue');
+const SetupView = () => import('@/views/SetupView.vue');
 
 // 路由守卫
 const requiresAuth = async (to: any, from: any, next: any) => {
@@ -50,6 +51,12 @@ const routes: RouteRecordRaw[] = [
     name: 'home',
     component: PhotoWall,
     meta: { title: '照片墙' },
+  },
+  {
+    path: '/setup',
+    name: 'setup',
+    component: SetupView,
+    meta: { title: '设置服务器', guest: true },
   },
   {
     path: '/login',
@@ -210,6 +217,13 @@ router.beforeEach(async (to, from, next) => {
   document.title = (to.meta.title as string) || 'FamilyWall';
   
   const authStore = useAuthStore();
+  
+  // 检查是否配置了 API 地址
+  const apiUrl = localStorage.getItem('api_url');
+  if (!apiUrl && to.name !== 'setup') {
+    next({ name: 'setup' });
+    return;
+  }
   
   // 需要认证的页面
   if (to.meta.requiresAuth) {
