@@ -218,9 +218,9 @@ router.beforeEach(async (to, from, next) => {
   
   const authStore = useAuthStore();
   
-  // 检查是否配置了 API 地址
+  // 检查是否配置了 API 地址 (setup 页面不需要检查)
   const apiUrl = localStorage.getItem('api_url');
-  if (!apiUrl && to.name !== 'setup') {
+  if (!apiUrl && to.name !== 'setup' && to.name !== 'login' && to.name !== 'register') {
     next({ name: 'setup' });
     return;
   }
