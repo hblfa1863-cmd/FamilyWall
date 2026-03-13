@@ -163,7 +163,7 @@ onUnmounted(() => {
 const initMap = () => {
   // 这里需要引入高德地图 JS API
   // 实际项目中需要在 public/index.html 中引入高德地图 SDK
-  // <script src="https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY"></script>
+  // 参考: https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY
   
   console.log('初始化高德地图...');
   
@@ -282,7 +282,7 @@ const navigateTo = (location: Location) => {
 .map-page__add-btn {
   position: absolute;
   right: var(--spacing-lg);
-  bottom: calc(var(--spacing-lg) + var(--tabbar-height) + 80px;
+  bottom: calc(var(--spacing-lg) + var(--tabbar-height) + 80px);
   width: 56px;
   height: 56px;
   border-radius: var(--radius-full);
