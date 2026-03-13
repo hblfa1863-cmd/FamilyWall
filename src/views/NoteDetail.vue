@@ -212,7 +212,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import api from '@/services/api';
+import { useAuthStore } from '@/stores/auth';
 import { FwAvatar, FwTag, FwConfirm } from '@/components';
 
 interface NoteImage {
@@ -251,6 +253,22 @@ const props = defineProps<{
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
+
+// 从 API 获取
+const loading = ref(true);
+
+const fetchNote = async () => {
+  try {
+    const res = await api.getNote(props.noteId);
+    if (res.success && res.data) {
+      note.value = res.data;
+    }
+  } catch (e) { console.error(e); }
+  finally { loading.value = false; }
+};
+
+onMounted(() => { fetchNote(); });
 
 // 模拟数据
 const note = ref({

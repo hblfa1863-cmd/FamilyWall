@@ -14,12 +14,17 @@
 
     <!-- 筛选标签 -->
     <div class="photo-wall__filters">
-      <span :class="['photo-wall__filter', { 'photo-wall__filter--active': filter === 'all' }]" @click="filter = 'all'">
+      <span :class="['photo-wall__filter', { 'photo-wall__filter--active': filter === 'all' }]" @click="handleFilterChange('all')">
         全部
       </span>
-      <span :class="['photo-wall__filter', { 'photo-wall__filter--active': filter === 'mine' }]" @click="filter = 'mine'">
+      <span :class="['photo-wall__filter', { 'photo-wall__filter--active': filter === 'mine' }]" @click="handleFilterChange('mine')">
         我的
       </span>
+    </div>
+
+    <!-- 错误提示 -->
+    <div v-if="error" class="photo-wall__error">
+      {{ error }}
     </div>
 
     <!-- 瀑布流照片墙 -->
@@ -111,89 +116,133 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { FwButton, FwAvatar } from '@/components';
+import api from '@/services/api';
+import type { Family, Clan, Note } from '@/types';
 
 const router = useRouter();
 
 const showFamilySelector = ref(false);
 const filter = ref<'all' | 'mine'>('all');
 const loading = ref(false);
+const error = ref('');
 
-const currentFamily = reactive({
-  id: 1,
-  name: '张三的家庭',
+// 类型定义
+interface SimpleFamily {
+  id: number;
+  name: string;
+  avatar?: string;
+  memberCount?: number;
+  noteCount?: number;
+}
+
+interface SimpleClan {
+  id: number;
+  name: string;
+  avatar?: string;
+  familyCount?: number;
+  noteCount?: number;
+}
+
+interface SimpleNote {
+  id: number;
+  title: string;
+  cover?: string;
+  imagesCount?: number;
+  author: {
+    nickname: string;
+    avatar?: string;
+  };
+}
+
+const currentFamily = reactive<SimpleFamily>({
+  id: 0,
+  name: '请选择家庭',
   avatar: '',
 });
 
-const myFamilies = ref([
-  { id: 1, name: '张三的家庭', avatar: '', memberCount: 5, noteCount: 23 },
-  { id: 2, name: '李四的家庭', avatar: '', memberCount: 3, noteCount: 10 },
-]);
+const myFamilies = ref<SimpleFamily[]>([]);
+const myClans = ref<SimpleClan[]>([]);
+const notes = ref<SimpleNote[]>([]);
 
-const myClans = ref([
-  { id: 1, name: '王氏家族', avatar: '', familyCount: 3, noteCount: 89 },
-]);
-
-const notes = ref([
-  {
-    id: 1,
-    title: '春节家庭聚会',
-    cover: 'https://picsum.photos/400/300?random=1',
-    imagesCount: 5,
-    author: { nickname: '张三', avatar: '' },
-  },
-  {
-    id: 2,
-    title: '国庆出游',
-    cover: 'https://picsum.photos/400/400?random=2',
-    imagesCount: 8,
-    author: { nickname: '李四', avatar: '' },
-  },
-  {
-    id: 3,
-    title: '端午包粽子',
-    cover: 'https://picsum.photos/400/350?random=3',
-    imagesCount: 3,
-    author: { nickname: '王五', avatar: '' },
-  },
-  {
-    id: 4,
-    title: '中秋赏月',
-    cover: 'https://picsum.photos/400/380?random=4',
-    imagesCount: 6,
-    author: { nickname: '赵六', avatar: '' },
-  },
-  {
-    id: 5,
-    title: '清明踏青',
-    cover: 'https://picsum.photos/400/320?random=5',
-    imagesCount: 4,
-    author: { nickname: '钱七', avatar: '' },
-  },
-  {
-    id: 6,
-    title: '生日派对',
-    cover: 'https://picsum.photos/400/360?random=6',
-    imagesCount: 12,
-    author: { nickname: '孙八', avatar: '' },
-  },
-]);
-
-const selectFamily = (family: any) => {
-  currentFamily.id = family.id;
-  currentFamily.name = family.name;
-  currentFamily.avatar = family.avatar;
-  showFamilySelector.value = false;
+// 获取家庭列表
+const fetchFamilies = async () => {
+  try {
+    const res = await api.getFamilies();
+    if (res.success && res.data) {
+      myFamilies.value = res.data.map((f: Family) => ({
+        id: f.id,
+        name: f.name,
+        avatar: f.avatar,
+        memberCount: f.member_count,
+        noteCount: f.note_count,
+      }));
+      // 设置第一个家庭为当前
+      if (myFamilies.value.length > 0 && currentFamily.id === 0) {
+        selectFamily(myFamilies.value[0]);
+      }
+    }
+  } catch (e: any) {
+    error.value = '获取家庭列表失败';
+    console.error(e);
+  }
 };
 
-const selectClan = (clan: any) => {
-  // 切换到家族视角
+// 获取笔记列表
+const fetchNotes = async () => {
+  loading.value = true;
+  error.value = '';
+  try {
+    const res = await api.getPhotos();
+    if (res.success && res.data) {
+      notes.value = res.data.map((note: Note) => ({
+        id: note.id,
+        title: note.title,
+        cover: note.cover || note.media?.[0]?.url,
+        imagesCount: note.media?.filter(m => m.type === 'image').length || 1,
+        author: {
+          nickname: note.user?.nickname || '未知',
+          avatar: note.user?.avatar,
+        },
+      }));
+    }
+  } catch (e: any) {
+    error.value = '获取笔记失败';
+    console.error(e);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 初始化
+onMounted(async () => {
+  await fetchFamilies();
+  await fetchNotes();
+});
+
+const selectFamily = (family: SimpleFamily) => {
+  currentFamily.id = family.id;
+  currentFamily.name = family.name;
+  currentFamily.avatar = family.avatar || '';
+  showFamilySelector.value = false;
+  // 切换家庭后重新获取笔记
+  fetchNotes();
+};
+
+const selectClan = (clan: SimpleClan) => {
   showFamilySelector.value = false;
 };
 
 const goToNoteDetail = (id: number) => {
   router.push(`/notes/${id}`);
+};
+
+// 筛选
+const handleFilterChange = (newFilter: 'all' | 'mine') => {
+  filter.value = newFilter;
+  fetchNotes();
 };
 </script>
 

@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue';
+import api from '@/services/api';
 import { FwAvatar } from '@/components';
 
 const router = useRouter();

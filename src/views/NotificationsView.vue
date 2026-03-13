@@ -78,8 +78,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { FwButton } from '@/components';
+import api from '@/services/api';
 import NotificationItem from '@/components/common/NotificationItem.vue';
 
 interface Notification {

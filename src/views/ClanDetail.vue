@@ -43,17 +43,74 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { FwAvatar } from '@/components';
+import api from '@/services/api';
 
 const router = useRouter();
 const route = useRoute();
 const activeTab = ref('photos');
+const loading = ref(false);
+
+const clanId = Number(route.params.id);
+const clan = ref<any>(null);
+const notes = ref<any[]>([]);
+const families = ref<any[]>([]);
 const isAdmin = ref(false);
 
-const clan = ref({ id: 1, name: '王氏家族', avatar: '', bio: '', familyCount: 3, noteCount: 89 });
-const notes = ref([{ id: 1, cover: 'https://picsum.photos/300/400?r=1' }, { id: 2, cover: 'https://picsum.photos/300/300?r=2' }]);
-const families = ref([{ id: 1, name: '张三的家庭', avatar: '', memberCount: 5 }]);
+// 获取家族详情
+const fetchClan = async () => {
+  loading.value = true;
+  try {
+    const res = await api.getClan(clanId);
+    if (res.success && res.data) {
+      clan.value = res.data;
+    }
+  } catch (e) {
+    console.error('获取家族失败', e);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 获取家族笔记
+const fetchNotes = async () => {
+  try {
+    const res = await api.getNotes(undefined, 1);
+    if (res.success && res.data) {
+      notes.value = res.data.data.map((note: any) => ({
+        id: note.id,
+        cover: note.cover || note.media?.[0]?.url,
+      }));
+    }
+  } catch (e) {
+    console.error('获取笔记失败', e);
+  }
+};
+
+// 获取成员家庭
+const fetchFamilies = async () => {
+  try {
+    const res = await api.getClanFamilies(clanId);
+    if (res.success && res.data) {
+      families.value = res.data.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        avatar: f.avatar,
+        memberCount: f.member_count || 0,
+      }));
+    }
+  } catch (e) {
+    console.error('获取家庭失败', e);
+  }
+};
+
+onMounted(() => {
+  fetchClan();
+  fetchNotes();
+  fetchFamilies();
+});
 </script>
 
 <style scoped>

@@ -123,9 +123,12 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { FwButton, FwInput, FwModal } from '@/components';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const loginType = ref<'password' | 'code'>('password');
 const loading = ref(false);
@@ -189,11 +192,19 @@ const handleLogin = async () => {
   loading.value = true;
   
   try {
-    // 模拟登录
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    let res;
+    if (loginType.value === 'password') {
+      res = await authStore.login(form.email, form.password);
+    } else {
+      res = await authStore.login(form.email, undefined, form.code);
+    }
     
-    // 登录成功跳转
-    router.push('/');
+    if (res.success) {
+      router.push('/');
+    } else {
+      errorMessage.value = res.message || '登录失败';
+      showError.value = true;
+    }
   } catch (error: any) {
     errorMessage.value = error.message || '登录失败，请重试';
     showError.value = true;

@@ -94,8 +94,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { FwAvatar, FwTag } from '@/components';
+import api from '@/services/api';
 
 const router = useRouter();
 const route = useRoute();
@@ -103,31 +105,83 @@ const route = useRoute();
 const familyId = Number(route.params.id);
 const activeTab = ref('photos');
 const showInviteModal = ref(false);
+const loading = ref(false);
 
-const family = ref({
-  id: familyId,
-  name: '张三的家庭',
-  avatar: '',
-  memberCount: 5,
-  noteCount: 23,
+// 家庭数据
+const family = ref<any>(null);
+const notes = ref<any[]>([]);
+const members = ref<any[]>([]);
+const inviteCode = ref('');
+const expireDate = ref('');
+const isAdmin = ref(false);
+
+// 获取家庭详情
+const fetchFamily = async () => {
+  loading.value = true;
+  try {
+    const res = await api.getFamily(familyId);
+    if (res.success && res.data) {
+      family.value = res.data;
+    }
+  } catch (e) {
+    console.error('获取家庭失败', e);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 获取笔记列表
+const fetchNotes = async () => {
+  try {
+    const res = await api.getNotes(familyId);
+    if (res.success && res.data) {
+      notes.value = res.data.data.map((note: any) => ({
+        id: note.id,
+        cover: note.cover || note.media?.[0]?.url,
+      }));
+    }
+  } catch (e) {
+    console.error('获取笔记失败', e);
+  }
+};
+
+// 获取成员列表
+const fetchMembers = async () => {
+  try {
+    const res = await api.getFamilyMembers(familyId);
+    if (res.success && res.data) {
+      members.value = res.data.map((m: any) => ({
+        id: m.id,
+        nickname: m.user?.nickname || '未知',
+        avatar: m.user?.avatar,
+        role: m.role,
+        joinedAt: new Date(m.joined_at).toLocaleDateString('zh-CN'),
+      }));
+    }
+  } catch (e) {
+    console.error('获取成员失败', e);
+  }
+};
+
+// 生成邀请码
+const generateInvite = async () => {
+  try {
+    const res = await api.generateInviteCode(familyId);
+    if (res.success && res.data) {
+      inviteCode.value = res.data.code;
+      expireDate.value = new Date(res.data.expires_at).toLocaleDateString('zh-CN');
+      showInviteModal.value = true;
+    }
+  } catch (e) {
+    console.error('生成邀请码失败', e);
+  }
+};
+
+onMounted(() => {
+  fetchFamily();
+  fetchNotes();
+  fetchMembers();
 });
-
-const isAdmin = ref(true);
-
-const notes = ref([
-  { id: 1, cover: 'https://picsum.photos/300/400?random=1' },
-  { id: 2, cover: 'https://picsum.photos/300/300?random=2' },
-  { id: 3, cover: 'https://picsum.photos/300/350?random=3' },
-]);
-
-const members = ref([
-  { id: 1, nickname: '张三', avatar: '', role: 'admin', joinedAt: '2023-01-15' },
-  { id: 2, nickname: '李四', avatar: '', role: 'member', joinedAt: '2023-03-20' },
-  { id: 3, nickname: '王五', avatar: '', role: 'member', joinedAt: '2023-06-10' },
-]);
-
-const inviteCode = ref('ABC123');
-const expireDate = ref('2026-03-13');
 
 const copyCode = () => {
   navigator.clipboard.writeText(inviteCode.value);

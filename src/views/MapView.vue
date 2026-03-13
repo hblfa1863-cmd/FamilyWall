@@ -161,7 +161,8 @@ onUnmounted(() => {
 });
 
 const initMap = () => {
-  // 这里需要引入高德地图 JS API
+  // TODO: 需要配置高德地图 JS API Key
+// 在 https://console.amap.com/ 申请 key 后，在 public/index.html 中引入
   // 实际项目中需要在 public/index.html 中引入高德地图 SDK
   // 参考: https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY
   

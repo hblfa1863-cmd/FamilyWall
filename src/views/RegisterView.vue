@@ -147,9 +147,12 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import { FwButton, FwInput, FwModal } from '@/components';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const loading = ref(false);
 const codeCounting = ref(false);
@@ -261,8 +264,14 @@ const handleRegister = async () => {
   loading.value = true;
   
   try {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    router.push('/');
+    const res = await authStore.register(form.email, form.password, form.code, form.nickname);
+    
+    if (res.success) {
+      router.push('/');
+    } else {
+      errorMessage.value = res.message || '注册失败';
+      showError.value = true;
+    }
   } catch (error: any) {
     errorMessage.value = error.message || '注册失败，请重试';
     showError.value = true;

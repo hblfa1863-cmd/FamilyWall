@@ -141,3 +141,61 @@ export interface AuthResponse {
   token: string;
   is_new?: boolean;
 }
+
+// ==================== 搜索相关 ====================
+
+export interface SearchResult {
+  users: User[];
+  families: Family[];
+  clans: Clan[];
+  notes: Note[];
+}
+
+export interface SearchResponse {
+  success: boolean;
+  data: SearchResult;
+}
+
+// ==================== 通用类型 ====================
+
+export interface SimpleFamily {
+  id: number;
+  name: string;
+  avatar?: string;
+  member_count?: number;
+  note_count?: number;
+}
+
+export interface SimpleClan {
+  id: number;
+  name: string;
+  avatar?: string;
+  bio?: string;
+  family_count?: number;
+  note_count?: number;
+}
+
+export interface SimpleNote {
+  id: number;
+  title: string;
+  cover?: string;
+  user_id?: number;
+  family_id?: number;
+  created_at?: string;
+}
+
+export interface NoteAuthor {
+  id: number;
+  nickname: string;
+  avatar?: string;
+}
+
+export interface NoteWithAuthor extends SimpleNote {
+  author: NoteAuthor;
+  media?: NoteMedia[];
+}
+
+export interface TimelineItem {
+  date: string;
+  notes: NoteWithAuthor[];
+}

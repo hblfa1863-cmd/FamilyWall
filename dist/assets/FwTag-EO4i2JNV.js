@@ -1,0 +1,1 @@
+import{d as t,c as s,n as o,D as n,o as c,_ as l}from"./index-lmsC-d5-.js";const r=t({__name:"FwTag",props:{type:{default:"default"},size:{default:"md"}},setup(e){return(a,d)=>(c(),s("span",{class:o(["fw-tag",`fw-tag--${e.type}`,`fw-tag--${e.size}`])},[n(a.$slots,"default",{},void 0)],2))}}),p=l(r,[["__scopeId","data-v-2b198893"]]);export{p as F};
