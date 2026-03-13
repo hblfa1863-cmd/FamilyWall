@@ -24,46 +24,37 @@
 
       <!-- 密码登录 -->
       <div v-if="loginType === 'password'" class="login-page__inputs">
-        <FwInput
+        <input
           v-model="form.email"
           type="email"
           placeholder="请输入邮箱"
-          :error="errors.email"
-        >
-          <template #prefix>📧</template>
-        </FwInput>
+          class="login-page__input"
+        />
 
-        <FwInput
+        <input
           v-model="form.password"
           type="password"
           placeholder="请输入密码"
-          :error="errors.password"
-          show-password-toggle
-        >
-          <template #prefix>🔒</template>
-        </FwInput>
+          class="login-page__input"
+        />
       </div>
 
       <!-- 验证码登录 -->
       <div v-else class="login-page__inputs">
-        <FwInput
+        <input
           v-model="form.email"
           type="email"
           placeholder="请输入邮箱"
-          :error="errors.email"
-        >
-          <template #prefix>📧</template>
-        </FwInput>
+          class="login-page__input"
+        />
 
         <div class="login-page__code-input">
-          <FwInput
+          <input
             v-model="form.code"
             type="text"
             placeholder="请输入验证码"
-            :error="errors.code"
-          >
-            <template #prefix>🔢</template>
-          </FwInput>
+            class="login-page__input"
+          />
           <button 
             class="login-page__code-btn"
             :disabled="codeCounting"
@@ -415,5 +406,43 @@ const goToRegister = () => {
 
 .login-page__error-content p {
   color: var(--color-text-secondary);
+}
+</style>
+
+<style scoped>
+.login-page__input {
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  box-sizing: border-box;
+}
+.login-page__input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+.login-page__code-input {
+  display: flex;
+  gap: 8px;
+}
+.login-page__code-input .login-page__input {
+  flex: 1;
+  margin-bottom: 0;
+}
+.login-page__code-btn {
+  padding: 12px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.login-page__code-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
 }
 </style>
