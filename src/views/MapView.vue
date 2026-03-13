@@ -149,9 +149,21 @@ const locations = ref<Location[]>([
   },
 ]);
 
-onMounted(() => {
-  // 初始化高德地图
-  initMap();
+onMounted(async () => {
+  // 从后端获取高德地图 Key
+  try {
+    const apiUrl = localStorage.getItem('api_url') || ''
+    const baseUrl = apiUrl.replace('/api', '')
+    const res = await fetch(`${baseUrl}/api/config/map-key`)
+    const data = await res.json()
+    if (data.success && data.data.key) {
+      initMap(data.data.key)
+    }
+  } catch (e) {
+    console.error('加载地图失败', e)
+    // 即使失败也初始化（使用占位）
+    initMap('')
+  }
 });
 
 onUnmounted(() => {
@@ -160,13 +172,18 @@ onUnmounted(() => {
   }
 });
 
-const initMap = () => {
-  // TODO: 需要配置高德地图 JS API Key
-// 在 https://console.amap.com/ 申请 key 后，在 public/index.html 中引入
-  // 实际项目中需要在 public/index.html 中引入高德地图 SDK
-  // 参考: https://webapi.amap.com/maps?v=2.0&key=YOUR_KEY
+const initMap = (amapKey: string) => {
+  console.log('初始化高德地图, Key:', amapKey ? '已配置' : '未配置');
   
-  console.log('初始化高德地图...');
+  if (amapKey) {
+    // 动态加载高德地图
+    const script = document.createElement('script')
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${amapKey}`
+    script.onload = () => {
+      console.log('高德地图加载成功')
+    }
+    document.head.appendChild(script)
+  }
   
   // 模拟创建标记点
   locations.value.forEach(loc => {
